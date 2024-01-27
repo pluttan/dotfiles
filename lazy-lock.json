@@ -13,6 +13,7 @@
   "gitsigns.nvim": { "branch": "main", "commit": "4aaacbf5e5e2218fd05eb75703fe9e0f85335803" },
   "image.nvim": { "branch": "master", "commit": "245422e5c4774f0640d41c0eadec77396f2be4a9" },
   "lazy.nvim": { "branch": "main", "commit": "96584866b9c5e998cbae300594d0ccfd0c464627" },
+  "lazygit.nvim": { "branch": "main", "commit": "1e08e3f5ac1152339690140e61a4a32b3bdc7de5" },
   "leetcode.nvim": { "branch": "master", "commit": "9934697917ad0786d36aa2869c6bddb0bdc6047b" },
   "lualine.nvim": { "branch": "master", "commit": "566b7036f717f3d676362742630518a47f132fff" },
   "mason-lspconfig.nvim": { "branch": "main", "commit": "3ba1b92b771f33256b4969d696b82c8ae7075364" },
@@ -38,5 +39,6 @@
   "translate.nvim": { "branch": "main", "commit": "dbe51100db78cb011bb0147bc0805a5e35824240" },
   "transparent.nvim": { "branch": "main", "commit": "fd35a46f4b7c1b244249266bdcb2da3814f01724" },
   "vim-plugin-ruscmd": { "branch": "master", "commit": "e952abbea092e420b128936a0c284fb522612c3a" },
+  "vimtex": { "branch": "master", "commit": "a397999be98e99482348e7108baa795c244a0f15" },
   "window-picker": { "branch": "main", "commit": "41cfaa428577c53552200a404ae9b3a0b5719706" }
 }
