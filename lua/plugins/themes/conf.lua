@@ -7,6 +7,15 @@ return {
 					name = "󰄛 Catppuccin",
 					colorscheme = "catppuccin",
 					before = [[
+                            require("catppuccin").setup({
+                            transparent_background = true,
+                        })  
+                    ]],
+				},
+                {
+					name = "󰄛 Catppuccin ",
+					colorscheme = "catppuccin",
+					before = [[
                         require("catppuccin").setup({
                             transparent_background = true,
                         })  

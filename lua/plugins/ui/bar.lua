@@ -7,8 +7,8 @@ return {
             require("bufferline").setup({
                 options = {
                    mode = "buffers", -- set to "tabs" to only show tabpages instead
-                    themable = true, 
-                    close_command = "bdelete! %d", 
+                    themable = true,
+                    close_command = "bdelete! %d",
                     indicator = {
                         style = 'icon',
                     },
