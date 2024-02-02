@@ -14,8 +14,8 @@ return {
 
 					"lua_ls",
 					"tsserver",
-                    "texlab"
-
+					"texlab",
+					"clangd",
 				},
 			})
 		end,
@@ -29,11 +29,28 @@ return {
 
 			lspconfig.lua_ls.setup({ capabilities = capabilities })
 			lspconfig.tsserver.setup({ capabilities = capabilities })
-            lspconfig.texlab.setup({ capabilities = capabilities })
+			lspconfig.texlab.setup({ capabilities = capabilities })
+			lspconfig.clangd.setup({ capabilities = capabilities })
 
 			vim.keymap.set("n", "gd", vim.lsp.buf.definition, {})
 			vim.keymap.set("n", "K", vim.lsp.buf.hover, {})
 			vim.keymap.set({ "n", "v" }, "<space>ca", vim.lsp.buf.code_action, {})
+		end,
+	},
+	{
+		"nvimtools/none-ls.nvim",
+		config = function()
+			local null_ls = require("null-ls")
+			null_ls.setup({
+				sources = {
+					null_ls.builtins.formatting.stylua,
+					null_ls.builtins.code_actions.eslint,
+                    -- cpp
+				    null_ls.builtins.formatting.clang_format,
+                },
+			})
+
+			vim.keymap.set("n", "<M-f>", vim.lsp.buf.format, {})
 		end,
 	},
 }

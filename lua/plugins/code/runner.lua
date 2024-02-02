@@ -9,6 +9,11 @@ return {
                         "--shell-escape",
                         "$fileName"
 					},
+                    cpp = {
+                        "cd $dir &&",
+                        "g++ -std=c++11 $fileName -o $fileNameWithoutExt &&", 
+                        "$dir/$fileNameWithoutExt"
+                    }
 				},
 			})
 			vim.keymap.set("n", "<leader>r", ":RunCode<CR>", { noremap = true, silent = false })
