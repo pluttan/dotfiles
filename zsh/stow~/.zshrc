@@ -7,8 +7,6 @@ export EDITOR=nvim
 export ZSH="/Users/pluttan/.oh-my-zsh"
 ZSH_CUSTOM="${HOME}/.dotfiles/zsh"
 
-ZSH_THEME="plam"
-
 source ~/.dotfiles/zsh/plugins/zsh-syntax-highlighting-dracula/zsh-syntax-highlighting.sh
 
 plugins=(git
@@ -40,5 +38,10 @@ eval $(thefuck --alias FUCK)
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
 zstyle :omz:plugins:iterm2 shell-integration yes
 
+ZSH_THEME="plam"
+
 source $ZSH/oh-my-zsh.sh
 source ~/.dotfiles/zsh/stow\~/.custom_aliases
+if ! {  [ -n "$TMUX" ] } then
+    eval "tmux"
+fi

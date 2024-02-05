@@ -13,3 +13,4 @@ alias nvimtutor='tmpfile=$(mktemp /tmp/tmpvimtutor) && /usr/share/vim/vim90/tuto
 alias clr='clear'
 alias dos='/Applications/DOSBox\ Staging.app/Contents/MacOS/dosbox'
 alias aseprite='aseprite/build/bin/aseprite'
+alias tm='if ! {  [ -n "$TMUX" ] }; then tmux; fi'
