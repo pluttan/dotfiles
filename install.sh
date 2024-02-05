@@ -1,3 +1,8 @@
+# Update zsh plugins and link .zshrc
+rm -rf ~/.dotfiles/zsh/plugins
+git clone https://github.com/dracula/zsh-syntax-highlighting.git ~/.dotfiles/zsh/plugins/zsh-syntax-highlighting-dracula
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.dotfiles/zsh/plugins/zsh-syntax-highlighting
+git clone https://github.com/zsh-users/zsh-autosuggestions.git ~/.dotfiles/zsh/plugins/zsh-autosuggestions
 stow -d ~/.dotfiles/zsh/stow~ -t ~/ .
 
 stow -d ~/.dotfiles/tmux/stow~ -t ~/ .
