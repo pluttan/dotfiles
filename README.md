@@ -1,4 +1,4 @@
-# /home/pluttan/.dotfiles
+# [/home/pluttan/.dotfiles](https://github.com/pluttan/dotfile/)
 
 This repo is the home of my custom system configuration which enables a consistent computing experience across multiple machines. Configure testing on mac os.
 
