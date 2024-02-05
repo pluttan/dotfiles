@@ -1,0 +1,44 @@
+ #[[ -f "${HOME}/Library/Application Support/codewhisperer/shell/zshrc.pre.zsh" ]] && builtin source "${HOME}/Library/Application Support/codewhisperer/shell/zshrc.pre.zsh"
+
+export PATH="$HOME/.tmuxifier/bin:$PATH"
+export NVM_DIR="$HOME/.nvm"
+export MANPAGER='nvim +Man!'
+export EDITOR=nvim
+export ZSH="/Users/pluttan/.oh-my-zsh"
+ZSH_CUSTOM="${HOME}/.dotfiles/zsh"
+
+ZSH_THEME="plam"
+
+source ~/.dotfiles/zsh/plugins/zsh-syntax-highlighting-dracula/zsh-syntax-highlighting.sh
+
+plugins=(git
+colorize
+Docker
+sudo
+composer
+zsh-syntax-highlighting
+zsh-autosuggestions
+autoedit
+aliases
+brew
+command-not-found
+compleat
+dirhistory
+emoji-clock
+iterm2
+macos
+python
+tmux
+)
+
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  
+
+eval $(thefuck --alias)
+eval $(thefuck --alias FUCK)
+
+test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
+zstyle :omz:plugins:iterm2 shell-integration yes
+
+source ~/.dotfiles/zsh/stow\~/.custom_aliases
+source $ZSH/oh-my-zsh.sh
