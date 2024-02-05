@@ -40,5 +40,5 @@ eval $(thefuck --alias FUCK)
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
 zstyle :omz:plugins:iterm2 shell-integration yes
 
-source ~/.dotfiles/zsh/stow\~/.custom_aliases
 source $ZSH/oh-my-zsh.sh
+source ~/.dotfiles/zsh/stow\~/.custom_aliases
