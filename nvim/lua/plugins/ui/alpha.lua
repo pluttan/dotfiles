@@ -23,15 +23,14 @@ return {
 		}
 
 		dash.section.buttons.val = {
-			dash.button("n",  "      Neotree",   "<C-z>"),
-			dash.button("p",   "     󰷎 Projects",  "<M-p> "),
-			dash.button("f",         "      New file",  ":e "),
-			dash.button("t",  "      Telescope", "<C-w>"),
-			dash.button("s","      Speedtyper",":Speedtyper"),
-			dash.button("c",  "      Open config",":e ~/.config/nvim<CR><C-z>"),
-			dash.button("q",         "      Quit",      ":q<CR>"),
-	        	
-    }
+			dash.button("n", "      Neotree", ":Neotree reveal left <CR>"),
+			dash.button("p", "     󰷎 Projects", ":ProjectMgr<CR>"),
+			dash.button("f", "      New file", ":Telescope cmdline<CR>e "),
+			dash.button("t", "      Telescope", ":lua require('telescope.builtin').find_files()<CR>"),
+			dash.button("s", "      Speedtyper", ":Speedtyper<CR>"),
+			dash.button("c", "      Open config", ":Neotree ~/.dotfiles/nvim/<CR>"),
+			dash.button("q", "      Quit", ":qall<CR>"),
+		}
 
 		alpha.setup(dash.opts)
 	end,
