@@ -13,3 +13,6 @@ stow -d ~/.dotfiles/nvim -t ~/.config/nvim .
 stow -d ~/.dotfiles/dos -t ~/ .
 
 git config --global core.excludesfile ~/.dotfiles/git/.gitignore
+
+rm ~/Library/Application\ Support/lazygit/config.yml
+stow -d ~/.dotfiles/lazygit -t ~/Library/Application\ Support/lazygit .
