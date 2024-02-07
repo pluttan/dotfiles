@@ -15,4 +15,4 @@ stow -d ~/.dotfiles/dos -t ~/ .
 git config --global core.excludesfile ~/.dotfiles/git/.gitignore
 
 rm ~/Library/Application\ Support/lazygit/config.yml
-stow -d ~/.dotfiles/lazygit -t ~/Library/Application\ Support/lazygit .
+stow -d ~/.dotfiles/git/lazygit -t ~/Library/Application\ Support/lazygit .
