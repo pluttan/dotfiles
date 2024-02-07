@@ -11,3 +11,5 @@ mkdir ~/.config/nvim
 stow -d ~/.dotfiles/nvim -t ~/.config/nvim .
 
 stow -d ~/.dotfiles/dos -t ~/ .
+
+git config --global core.excludesfile ~/.dotfiles/git/.gitignore
