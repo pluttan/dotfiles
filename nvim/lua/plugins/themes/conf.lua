@@ -4,23 +4,75 @@ return {
 		require("themery").setup({
 			themes = {
 				{
-					name = "󰄛 Catppuccin",
-					colorscheme = "catppuccin",
-					before = [[
-                            require("catppuccin").setup({
-                            transparent_background = true,
-                        })  
-                    ]],
-				},
-                {
-					name = "󰄛 Catppuccin ",
-					colorscheme = "catppuccin",
+					name = "󰄛 Catppuccin -- Mocha",
+					colorscheme = "catppuccin-mocha",
 					before = [[
                         require("catppuccin").setup({
                             transparent_background = true,
                         })  
                     ]],
 				},
+                {
+					name = "󰄛 Catppuccin -- Macchiato",
+					colorscheme = "catppuccin-macchiato",
+					before = [[
+                        require("catppuccin").setup({
+                            transparent_background = true,
+                        })  
+                    ]],
+				},
+                {
+					name = "󰄛 Catppuccin -- Frappe",
+					colorscheme = "catppuccin-frappe",
+					before = [[
+                        require("catppuccin").setup({
+                            transparent_background = true,
+                        })  
+                    ]],
+				},
+                {
+                	name = "󰭟 Dracula",
+					colorscheme = "dracula",
+					before = [[
+                       require("dracula").setup({
+                            transparent_bg = true,
+                       })
+                    ]],
+                },
+                {
+                    name = " Aura -- Dark",
+					colorscheme = "aura-dark",
+                    before = [[
+                        vim.opt.rtp:append(plugin.dir .. "/packages/neovim")
+                    ]],
+                },
+                {
+                    name = " Aura -- Dark Soft Text",
+					colorscheme = "aura-dark-soft-text",
+					before = [[
+                       require("aura").setup({
+                            transparent_bg = true,
+                       })
+                    ]],
+                },
+                {
+                    name = " Aura -- Soft Dark",
+					colorscheme = "aura-soft-dark",
+					before = [[
+                       require("aura").setup({
+                            transparent_bg = true,
+                       })
+                    ]],
+                },
+                {
+                    name = " Aura -- Soft Dark Soft Text",
+					colorscheme = "aura-soft-dark-soft-text",
+					before = [[
+                       require("aura").setup({
+                            transparent_bg = true,
+                       })
+                    ]],
+                },
 				{
 					name = "󰖔 Tokyo night",
 					colorscheme = "tokyonight",
@@ -33,15 +85,10 @@ return {
                                 floats = "transparent", -- style for floating windows
                             }
                         })
-                        require('lualine').setup {
-                            options = {
-                                theme = 'tokyonight'
-                            }
-                        }
                     ]]
 				},
                 {
-					name = "󰖔󰼸 Tokyo night -- Storm",
+					name = "󰖔 Tokyo night -- Storm",
 					colorscheme = "tokyonight",
 					before = [[
                         require("tokyonight").setup({
@@ -52,15 +99,10 @@ return {
                                 floats = "transparent", -- style for floating windows
                             }
                         })
-                        require('lualine').setup {
-                            options = {
-                                theme = 'tokyonight'
-                            }
-                        }
                     ]]
 				},
                 {
-				    name = "󰖔 Tokyo night -- Moon",
+				    name = "󰖔 Tokyo night -- Moon",
 					colorscheme = "tokyonight",
 					before = [[
                         require("tokyonight").setup({
@@ -71,16 +113,11 @@ return {
                                 floats = "transparent", -- style for floating windows
                             }
                         })
-                        require('lualine').setup {
-                            options = {
-                                theme = 'tokyonight'
-                            }
-                        }
                     ]]
 				},
                 -- DAY Themes
                 {
-					name = "󰖔 Tokyo night -- Day",
+					name = " 󰖔 Tokyo night -- Day",
 					colorscheme = "tokyonight",
 					before = [[
                         require("tokyonight").setup({
@@ -91,12 +128,16 @@ return {
                                 floats = "transparent", -- style for floating windows
                             }
                         })
-                        require('lualine').setup {
-                            options = {
-                                theme = 'tokyonight'
-                            }
-                        }
                     ]]
+				},
+                {
+					name = " 󰄛 Catppuccin -- Latte",
+					colorscheme = "catppuccin-latte",
+					before = [[
+                        require("catppuccin").setup({
+                            transparent_background = true,
+                        })  
+                    ]],
 				},
 			}, -- Your list of installed colorschemes
 			themeConfigFile = "~/.config/nvim/lua/plugins/themes/conf.lua", -- Described below
@@ -111,7 +152,7 @@ transparent_background = true,
 })
 
 
-vim.cmd("colorscheme catppuccin")
+vim.cmd("colorscheme catppuccin-mocha")
 vim.g.theme_id = 1
 -- end themery block
 	end,
