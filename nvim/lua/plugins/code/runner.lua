@@ -5,9 +5,10 @@ return {
 			require("code_runner").setup({
 				filetype = {
 					tex = {
-						"/usr/local/texlive/2023/bin/universal-darwin/xelatex",
+                        "echo '$dir/$fileNameWithoutExt'&&",
+						"xelatex",
                         "--shell-escape",
-                        "$fileName"
+                        "$dir/$fileNameWithoutExt"
 					},
                     cpp = {
                         "cd $dir &&",

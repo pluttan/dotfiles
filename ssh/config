@@ -1,0 +1,11 @@
+Host 95.163.235.193
+	User pluttan
+    HostName 95.163.235.193
+
+Host github.com
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/personal_key
+    IdentitiesOnly yes
+
+ServerAliveInterval 60

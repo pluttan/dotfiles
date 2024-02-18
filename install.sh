@@ -16,3 +16,6 @@ git config --global core.excludesfile ~/.dotfiles/git/.gitignore
 
 rm ~/Library/Application\ Support/lazygit/config.yml
 stow -d ~/.dotfiles/git/lazygit -t ~/Library/Application\ Support/lazygit .
+
+rm ~/.ssh/config
+stow -d ~/.dotfiles/ssh -t ~/.ssh .

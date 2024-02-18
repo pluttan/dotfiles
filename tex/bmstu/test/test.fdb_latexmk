@@ -1,0 +1,14 @@
+# Fdb version 4
+["pdflatex"] 1707413265 "test.tex" "test.pdf" "test" 1707413266 2
+  "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-dist/tex/latex/base/article.cls" 1678549815 20144 d5ecf0a5140c8d8d8b72cbe86e320eff ""
+  "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-dist/tex/latex/base/size10.clo" 1678549815 8448 c33a4e1cb35cee9b33c2b21033b73e39 ""
+  "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def" 1678549815 30429 213676d4c7327a21d91ddaed900e7b81 ""
+  "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-dist/web2c/texmf.cnf" 1678549815 40748 4081c8bc921e56c865f975bd762e388c ""
+  "/opt/homebrew/Cellar/texlive/20230313_2/share/texmf-var/web2c/pdftex/pdflatex.fmt" 1678549815 7884066 80f25e60658dfc5dcdb6ade5d53dd316 ""
+  "test.aux" 1707413266 8 a94a2480d3289e625eea47cd1b285758 "pdflatex"
+  "test.tex" 1707413189 643 c55c03e41ec9838e57486be026fbde67 ""
+  (generated)
+  "test.aux"
+  "test.log"
+  "test.pdf"
+  (rewritten before read)

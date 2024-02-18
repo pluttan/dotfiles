@@ -1,6 +1,7 @@
  #[[ -f "${HOME}/Library/Application Support/codewhisperer/shell/zshrc.pre.zsh" ]] && builtin source "${HOME}/Library/Application Support/codewhisperer/shell/zshrc.pre.zsh"
 
 export PATH="$HOME/.tmuxifier/bin:$PATH"
+export PATH="$HOME/.cargo/bin:$PATH"
 export NVM_DIR="$HOME/.nvm"
 export MANPAGER='nvim +Man!'
 export EDITOR=nvim

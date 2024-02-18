@@ -15,6 +15,7 @@ return {
           width = 25
         }
       })
-      vim.keymap.set('n','<C-z>', ':Neotree reveal left <CR>', {})
+      vim.keymap.set('n','<M-x>', ':Neotree reveal left <CR>', {})
+      vim.keymap.set('n','<M-c>', ':Neotree close <CR>', {})
     end
 }
