@@ -39,31 +39,31 @@ return {
                        })
                     ]],
                 },
-                {
-                    name = " Aura -- Dark",
-					colorscheme = "aura-dark",
-                    before = [[
-                        vim.opt.rtp:append(plugin.dir .. "/packages/neovim")
-                    ]],
-                },
-                {
-                    name = " Aura -- Dark Soft Text",
-					colorscheme = "aura-dark-soft-text",
-					before = [[
-                       require("aura").setup({
-                            transparent_bg = true,
-                       })
-                    ]],
-                },
-                {
-                    name = " Aura -- Soft Dark",
-					colorscheme = "aura-soft-dark",
-					before = [[
-                       require("aura").setup({
-                            transparent_bg = true,
-                       })
-                    ]],
-                },
+     --            {
+     --                name = " Aura -- Dark",
+					-- colorscheme = "aura-dark",
+     --                before = [[
+     --                    vim.opt.rtp:append(plugin.dir .. "/packages/neovim")
+     --                ]],
+     --            },
+     --            {
+     --                name = " Aura -- Dark Soft Text",
+					-- colorscheme = "aura-dark-soft-text",
+					-- before = [[
+     --                   require("aura").setup({
+     --                        transparent_bg = true,
+     --                   })
+     --                ]],
+     --            },
+     --            {
+     --                name = " Aura -- Soft Dark",
+					-- colorscheme = "aura-soft-dark",
+					-- before = [[
+     --                   require("aura").setup({
+     --                        transparent_bg = true,
+     --                   })
+     --                ]],
+     --            },
                 {
                     name = " Aura -- Soft Dark Soft Text",
 					colorscheme = "aura-soft-dark-soft-text",
