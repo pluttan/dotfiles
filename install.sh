@@ -16,9 +16,6 @@ stow -d ~/.dotfiles/dos -t ~/ .
 
 git config --global core.excludesfile ~/.dotfiles/git/.gitignore
 
-rm ~/.config/lazygit/config.yml
-stow -d ~/.dotfiles/git/lazygit -t ~/.config/lazygit .
-
 rm -rf ~/.config/colorls
 mkdir ~/.config/colorls
 rm -rf ~/.dotfiles/colorls
@@ -29,4 +26,10 @@ cp ~/.dotfiles/colorls/dark_colors.yaml ~/.config/colorls/dark_colors.yaml
 rm ~/.gdbinit
 stow -d ~/.dotfiles/gdb/ -t ~/ .
 
+rm ~/Library/Application\ Support/lazygit/config.yml
+stow -d ~/.dotfiles/git/lazygit -t ~/Library/Application\ Support/lazygit .
+rm ~/.config/lazygit/config.yml
+stow -d ~/.dotfiles/git/lazygit -t ~/.config/lazygit .
+
+rm ~/.ssh/config
 stow -d ~/.dotfiles/ssh -t ~/.ssh .

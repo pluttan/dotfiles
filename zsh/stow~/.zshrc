@@ -3,6 +3,7 @@
 export TERM="screen-256color"
 export PATH="$HOME/.tmuxifier/bin:$PATH"
 export PATH="$PATH:/opt/nvim-linux64/bin"
+export PATH="$HOME/.cargo/bin:$PATH"
 export NVM_DIR="$HOME/.nvm"
 export MANPAGER='nvim +Man!'
 export EDITOR=nvim
