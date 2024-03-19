@@ -45,6 +45,6 @@ ZSH_THEME="plam"
 
 source $ZSH/oh-my-zsh.sh
 source ~/.dotfiles/zsh/stow\~/.custom_aliases
-if ! {  [ -n "$TMUX" ] } then
-    eval "tmux"
-fi
+# if ! {  [ -n "$TMUX" ] } then
+#     eval "tmux"
+# fi

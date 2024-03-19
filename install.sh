@@ -28,8 +28,10 @@ stow -d ~/.dotfiles/gdb/ -t ~/ .
 
 rm ~/Library/Application\ Support/lazygit/config.yml
 stow -d ~/.dotfiles/git/lazygit -t ~/Library/Application\ Support/lazygit .
-rm ~/.config/lazygit/config.yml
-stow -d ~/.dotfiles/git/lazygit -t ~/.config/lazygit .
 
 rm ~/.ssh/config
 stow -d ~/.dotfiles/ssh -t ~/.ssh .
+
+rm -r ~/.warp
+mkdir ~/.warp
+stow -d ~/.dotfiles/warp ~/.warp .
