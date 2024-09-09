@@ -2,8 +2,11 @@ return {
 	"Pocco81/auto-save.nvim",
 	config = function()
 		 require("auto-save").setup {
-			-- your config goes here
-			-- or just leave it empty :)
-		 }
-	end
+			condition = function(buf)
+			    return (vim.fn.getbufvar(buf, "&modifiable") == 1)
+			end,
+        }
+	end,
+    write_all_buffers = true,
+    debounce_delay = 1
 }

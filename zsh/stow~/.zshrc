@@ -1,16 +1,20 @@
- #[[ -f "${HOME}/Library/Application Support/codewhisperer/shell/zshrc.pre.zsh" ]] && builtin source "${HOME}/Library/Application Support/codewhisperer/shell/zshrc.pre.zsh"
+pr=/Volumes/pr/dotfiles
+p=/Volumes/pr
 
 export TERM="screen-256color"
 export PATH="$HOME/.tmuxifier/bin:$PATH"
 export PATH="$PATH:/opt/nvim-linux64/bin"
 export PATH="$HOME/.cargo/bin:$PATH"
+export PATH="/opt/homebrew/bin/:$PATH"
+export PATH="$HOME/.rvm/rubies/ruby-3.0.1/bin/:$PATH"
+export PATH="$PATH:/Applications/ArmGNUToolchain/13.2.Rel1/arm-none-eabi/bin"
 export NVM_DIR="$HOME/.nvm"
 export MANPAGER='nvim +Man!'
 export EDITOR=nvim
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_CUSTOM="${HOME}/.dotfiles/zsh"
 
-source ~/.dotfiles/zsh/plugins/zsh-syntax-highlighting-dracula/zsh-syntax-highlighting.sh
+source $pr/zsh/plugins/zsh-syntax-highlighting-dracula/zsh-syntax-highlighting.sh
 
 plugins=(git
 colorize
@@ -44,7 +48,9 @@ zstyle :omz:plugins:iterm2 shell-integration yes
 ZSH_THEME="plam"
 
 source $ZSH/oh-my-zsh.sh
-source ~/.dotfiles/zsh/stow\~/.custom_aliases
+source $pr/zsh/stow\~/.custom_aliases
 # if ! {  [ -n "$TMUX" ] } then
 #     eval "tmux"
 # fi
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh

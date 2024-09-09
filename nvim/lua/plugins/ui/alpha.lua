@@ -29,7 +29,7 @@ return {
 			dash.button("u", "      Themery", ":Themery<CR>"),
 			dash.button("t", "      Telescope", ":lua require('telescope.builtin').find_files()<CR>"),
 			dash.button("s", "      Speedtyper", ":Speedtyper<CR>"),
-			dash.button("c", "      Open config", ":Neotree ~/.dotfiles/<CR>"),
+			dash.button("c", "      Open config", ":Neotree /Volumes/pr/.dotfiles/<CR>"),
 			dash.button("q", "      Quit", ":qall<CR>"),
 		}
 

@@ -1,4 +1,3 @@
-
 Host 95.163.235.193
 	User pluttan
     HostName 95.163.235.193
@@ -8,4 +7,3 @@ Host github.com
     IdentityFile ~/.ssh/personal_key
     IdentitiesOnly yes
 ServerAliveInterval 60
-

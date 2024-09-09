@@ -13,6 +13,11 @@ return {
         window = {
           position = "left",
           width = 25
+        },
+        default_component_configs = {
+          indent = {
+            indent_size = 1,
+          }
         }
       })
       vim.keymap.set('n','<M-x>', ':Neotree reveal left <CR>', {})
