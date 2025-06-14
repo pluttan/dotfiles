@@ -17,3 +17,7 @@ alias aseprite='aseprite/build/bin/aseprite'
 alias tm='if ! {  [ -n "$TMUX" ] }; then tmux; fi'
 alias cdas='cd ~/Library/Application\ Support'
 alias yy='yazi'
+alias chcodejsts='find . -name "*.js" -o -name "*.ts" | xargs wc -l'
+alias chcodejs='find . -name "*.js" | xargs wc -l'
+alias chcodets='find . -name "*.ts" | xargs wc -l'
+

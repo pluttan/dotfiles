@@ -1,6 +1,22 @@
+Host pluttan.ru
+	HostName pluttan.ru
+	User pluttan
+	Port 6100
+
+Host 192.168.1.254
+	HostName 192.168.1.254
+	User pluttan
+	Port 6000
+
+Host 81.163.28.131
+	User root
+    HostName 81.163.28.131
+    IdentityFile ~/.ssh/personal_key
+	
 Host 95.163.235.193
 	User pluttan
     HostName 95.163.235.193
+	
 Host github.com
     HostName github.com
     User git

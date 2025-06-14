@@ -1,0 +1,1 @@
+sh -c "$(wget -O- https://raw.githubusercontent.com/pluttan/volumes/main/volumes.sh)" -- "$(wget -O- https://raw.githubusercontent.com/pluttan/volumes/main/volumes.sh)"
