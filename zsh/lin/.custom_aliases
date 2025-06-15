@@ -1,0 +1,11 @@
+# vim: ft=bash 
+alias py='python3 '
+alias ls='colorls '
+alias tree='colorls --tree '
+alias nv='nvim '
+alias lg='lazygit '
+alias nvlc='nvim leetcode.nvim'
+alias nvimtutor='tmpfile=$(mktemp /tmp/tmpvimtutor) && /usr/share/vim/vim90/tutor/tutor.ru.utf-8)&&nv tmpfile'
+alias clr='clear '
+alias tm='if ! {  [ -n "$TMUX" ] }; then tmux; fi'
+alias yy='yazi '

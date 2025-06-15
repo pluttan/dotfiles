@@ -9,6 +9,11 @@ Host 192.168.1.254
 	Port 6000
 
 Host 81.163.28.131
+	User pluttan
+    HostName 81.163.28.131
+    IdentityFile ~/.ssh/personal_key
+	
+Host 81.163.28.131
 	User root
     HostName 81.163.28.131
     IdentityFile ~/.ssh/personal_key
