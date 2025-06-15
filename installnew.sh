@@ -14,6 +14,10 @@ sudo usermod -aG sudo pluttan                                         #  Доб�
     apt -y update
     apt -y upgrade
     apt -y full-upgrade
+    sed -i 's/bullseye/bookworm/g' /etc/apt/sources.list
+    apt -y update
+    apt -y upgrade
+    apt -y full-upgrade
     sed -i 's/bookworm/trixie/g' /etc/apt/sources.list
     apt -y update
     apt -y upgrade
