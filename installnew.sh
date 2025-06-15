@@ -11,13 +11,11 @@ sudo usermod -aG sudo pluttan                                         #  Доб�
 } #  Выбор директории установки
 
 {
+    export TERM=xterm
     apt -y update
     apt -y upgrade
     apt -y full-upgrade
-    sed -i 's/bullseye/bookworm/g' /etc/apt/sources.list
-    apt -y update
-    apt -y upgrade
-    apt -y full-upgrade
+    sed -i 's/bullseye/trixie/g' /etc/apt/sources.list
     sed -i 's/bookworm/trixie/g' /etc/apt/sources.list
     apt -y update
     apt -y upgrade
