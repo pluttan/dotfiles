@@ -14,6 +14,10 @@ sudo usermod -aG sudo pluttan                                         #  Доб�
     apt -y update
     apt -y upgrade
     apt -y full-upgrade
+    sed -i 's/bookworm/trixie/g' /etc/apt/sources.list
+    apt -y update
+    apt -y upgrade
+    apt -y full-upgrade
 } ## Обновление системы
 
 apt -y install zsh                             #  Установка zsh
@@ -26,7 +30,6 @@ apt -y install git                             #  Установка git
 apt -y install tmux                            #  Установка tmux
 apt -y install curl                            #  Установка curl
 apt -y install gdb                             #  Установка gdb
-apt -y install 
 
 {
     cd /home/pluttan/.system
@@ -35,7 +38,7 @@ apt -y install
 } # Установка oh-my-zsh
 
 {
-    curl -sS https://starship.rs/install.sh | sh 
+    sh -c "$(curl -sS https://starship.rs/install.sh)" -- -y
 } # Установка starship
 
 {
