@@ -67,7 +67,7 @@ gem install colorls # Установка colorls
     sudo -u pluttan git clone https://github.com/dracula/zsh-syntax-highlighting.git /home/pluttan/.dotfiles/zsh/plugins/zsh-syntax-highlighting-dracula
     sudo -u pluttan git clone https://github.com/zsh-users/zsh-syntax-highlighting.git /home/pluttan/.dotfiles/zsh/plugins/zsh-syntax-highlighting
     sudo -u pluttan git clone https://github.com/zsh-users/zsh-autosuggestions.git /home/pluttan/.dotfiles/zsh/plugins/zsh-autosuggestions
-} # Настройка плагинов zsh
+} ## Настройка плагинов zsh
 
 {
     sudo -u pluttan rm /home/pluttan/.zshrc
