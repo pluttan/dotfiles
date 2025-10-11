@@ -1,4 +1,4 @@
-pr=/home/pluttan/dotfiles
+pr=/home/pluttan/.dotfiles
 p=/Volumes/pr
 
 export TERM="screen-256color"

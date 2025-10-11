@@ -31,7 +31,7 @@ apt -y install gdb                             #  Установка gdb
     cd /home/pluttan/.system
     rm -r /home/pluttan/.oh-my-zsh
     sudo -u pluttan RUNZSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-} # Установка oh-my-zsh
+} # Установка oh-my-zsh (enter если установлено)
 
 {
     sh -c "$(curl -sS https://starship.rs/install.sh)" -- -y
@@ -60,6 +60,7 @@ gem install colorls # Установка colorls
     rm -r ./dotfiles
     sudo -u pluttan git clone https://github.com/pluttan/dotfiles 
     cp -r ./dotfiles /home/pluttan/.dotfiles
+    chown pluttan:pluttan -R /home/pluttan/.dotfiles/
 } # Клонирование dot-файлов
 
 {
