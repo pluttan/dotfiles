@@ -1,7 +1,7 @@
 # Script should be powered by volumes for correct installation
 # Volumes: https://github.com/pluttan/volumes
 
-adduser --shell $(whereis zsh | awk '{print $2}') --gecos "" pluttan  ## Добавление пользователя pluttan \nВведите пароль пользователя pluttan 2 раза:
+adduser --shell $(whereis zsh | awk '{print $2}') --gecos "" pluttan  ## Добавление пользователя pluttan \n Введите пароль пользователя pluttan 2 раза:
 sudo usermod -aG sudo pluttan                                         #  Добавление pluttan в sudoers
 {
     mkdir /home/pluttan/.system
@@ -18,10 +18,10 @@ sudo usermod -aG sudo pluttan                                         #  Доб�
 
 apt -y install zsh                             #  Установка zsh
 apt -y install stow                            #  Установка stow
-apt -y install python python3                  #  Установка python2
+apt -y install python3                         #  Установка python
 apt -y install build-essential                 #  Установка gcc
 apt -y install ruby ruby-dev ruby-colorize     #  Установка ruby
-apt -y install fonts-powerline fonts-firacode   #  Установка шрифтов
+apt -y install fonts-powerline fonts-firacode  #  Установка шрифтов
 apt -y install git                             #  Установка git
 apt -y install tmux                            #  Установка tmux
 apt -y install curl                            #  Установка curl

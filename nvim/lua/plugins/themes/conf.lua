@@ -140,7 +140,7 @@ return {
                     ]],
 				},
 			}, -- Your list of installed colorschemes
-			themeConfigFile = "~/.config/nvim/lua/plugins/themes/conf.lua", -- Described below
+		    --	themeConfigFile = "~/.config/nvim/lua/plugins/themes/conf.lua", -- Described below
 		})
 
         vim.keymap.set("n", '<M-t>', ':Themery<cr>', {})

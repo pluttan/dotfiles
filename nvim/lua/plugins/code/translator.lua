@@ -13,6 +13,9 @@ return {
 					enter_key = "T",
 				},
 			},
+            default = {
+                command = "google",
+            },
 			translate = {
 				{
 					cmd = "TransToRu",

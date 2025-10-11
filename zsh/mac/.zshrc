@@ -54,7 +54,7 @@ zstyle :omz:plugins:iterm2 shell-integration yes
 ZSH_THEME="plam"
 
 source $ZSH/oh-my-zsh.sh
-source $pr/zsh/stow\~/.custom_aliases
+source ~/.custom_aliases
 # if ! {  [ -n "$TMUX" ] } then
 #     eval "tmux"
 # fi
@@ -62,3 +62,9 @@ source $pr/zsh/stow\~/.custom_aliases
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 export PATH="/opt/X11/bin:$PATH"
 
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/Users/pluttan/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/pluttan/google-cloud-sdk/path.zsh.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f '/Users/pluttan/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/pluttan/google-cloud-sdk/completion.zsh.inc'; fi
