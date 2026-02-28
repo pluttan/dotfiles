@@ -126,3 +126,4 @@ usermod -s $(whereis zsh | awk '{print $2}') pluttan # Настройка обо
     rm /home/pluttan/.system
     true                                     
 } # Очистка директории установки
+

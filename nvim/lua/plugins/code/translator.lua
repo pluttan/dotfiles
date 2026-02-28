@@ -4,54 +4,29 @@ return {
 		"niuiic/core.nvim",
 	},
 	config = function()
-		require("translate").setup({
-			output = {
-				float = {
-					max_width = 40,
-					max_height = 5,
-					close_on_cursor_move = true,
-					enter_key = "T",
-				},
-			},
-            default = {
-                command = "google",
-            },
-			translate = {
-				{
-					cmd = "TransToRu",
-					command = "trans",
-					args = function(trans_source)
-						return {
-							"-b",
-							"-e",
-							"google",
-							"-t",
-							"ru",
-							trans_source,
-						}
-					end,
-					input = "selection",
-					output = { "float_win" },
-				},
-				{
-					cmd = "TransToEN",
-					command = "trans",
-					args = function(trans_source)
-						return {
-							"-b",
-							"-e",
-							"google",
-							"-t",
-							"en",
-							trans_source,
-						}
-					end,
-					input = "input",
-					output = { "float_win" },
-				},
-			},
-		})
-		vim.keymap.set("v", "<leader>tr", ":TransToRu")
-		vim.keymap.set("v", "<leader>te", ":TransToEN")
+		local translate = require("translate")
+
+		local function trans_to_ru()
+			translate.translate({
+				get_command = function(input)
+					return { "trans", "-b", "-e", "google", "-t", "ru", input }
+				end,
+				input = "selection",
+				output = { "open_float" },
+			})
+		end
+
+		local function trans_to_en()
+			translate.translate({
+				get_command = function(input)
+					return { "trans", "-b", "-e", "google", "-t", "en", input }
+				end,
+				input = "input",
+				output = { "open_float" },
+			})
+		end
+
+		vim.keymap.set("v", "<leader>tr", trans_to_ru, { desc = "Translate to Russian" })
+		vim.keymap.set("v", "<leader>te", trans_to_en, { desc = "Translate to English" })
 	end,
 }

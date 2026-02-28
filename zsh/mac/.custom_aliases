@@ -23,3 +23,6 @@ alias chcodets='find . -name "*.ts" | xargs wc -l'
 alias sug='gh copilot --shell-out suggest suggest command for mac os:'
 alias exp='gh copilot --shell-out explain'
 
+fl=$p/freelance
+pt=$p/pets
+

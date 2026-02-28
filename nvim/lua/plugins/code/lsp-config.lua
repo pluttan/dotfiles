@@ -9,32 +9,37 @@ return {
 	{
 		"williamboman/mason-lspconfig.nvim",
 		lazy = false,
-        opts = {
-            auto_install = true,
-        },
-        config = function()
+		dependencies = {
+			"williamboman/mason.nvim",
+		},
+		config = function()
 			require("mason-lspconfig").setup({
 				ensure_installed = {
-
 					"lua_ls",
-					"tsserver",
+					"ts_ls",
 					"texlab",
 					"clangd",
 				},
+				automatic_installation = true,
 			})
 		end,
 	},
 	{
 		"neovim/nvim-lspconfig",
+		dependencies = {
+			"williamboman/mason.nvim",
+			"williamboman/mason-lspconfig.nvim",
+		},
 		config = function()
 			local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
-			local lspconfig = require("lspconfig")
+			-- Новый формат для nvim 0.11+
+			vim.lsp.config("lua_ls", { capabilities = capabilities })
+			vim.lsp.config("ts_ls", { capabilities = capabilities })
+			vim.lsp.config("texlab", { capabilities = capabilities })
+			vim.lsp.config("clangd", { capabilities = capabilities })
 
-			lspconfig.lua_ls.setup({ capabilities = capabilities })
-			lspconfig.tsserver.setup({ capabilities = capabilities })
-			lspconfig.texlab.setup({ capabilities = capabilities })
-			lspconfig.clangd.setup({ capabilities = capabilities })
+			vim.lsp.enable({ "lua_ls", "ts_ls", "texlab", "clangd" })
 
 			vim.keymap.set("n", "gd", vim.lsp.buf.definition, {})
 			vim.keymap.set("n", "K", vim.lsp.buf.hover, {})
@@ -48,10 +53,9 @@ return {
 			null_ls.setup({
 				sources = {
 					null_ls.builtins.formatting.stylua,
-					null_ls.builtins.code_actions.eslint,
-                    -- cpp
-				    null_ls.builtins.formatting.clang_format,
-                },
+					-- cpp
+					null_ls.builtins.formatting.clang_format,
+				},
 			})
 
 			vim.keymap.set("n", "<M-f>", vim.lsp.buf.format, {})

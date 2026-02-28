@@ -1,5 +1,3 @@
-# inspired by af-magic
-
 #use extended color palette if available
 if [[ $terminfo[colors] -ge 256 ]]; then
     turquoise="%F{81}"
@@ -30,14 +28,13 @@ fi
 PR_RST="%f"
 
 # settings
-# no idea why this `typeset` is better than just plain simple variables. is it even?
 typeset +H return_code="%(?..%{$red%}%? ↵%{$PR_RST%})"
 
 # separator dashes size
 function dashed_line {
-	[[ -n "${VIRTUAL_ENV-}" && -z "${VIRTUAL_ENV_DISABLE_PROMPT-}" && "$PS1" = \(* ]] \
-		&& echo $(( COLUMNS - ${#VIRTUAL_ENV} - 3 )) \
-		|| echo $COLUMNS
+    [[ -n "${VIRTUAL_ENV-}" && -z "${VIRTUAL_ENV_DISABLE_PROMPT-}" && "$PS1" = \(* ]] \
+        && echo $(( COLUMNS - ${#VIRTUAL_ENV} - 3 )) \
+        || echo $COLUMNS
 }
 
 # git settings
@@ -54,23 +51,27 @@ ZSH_THEME_GIT_PROMPT_UNMERGED="%{$fg[magenta]%} ✂"
 ZSH_THEME_GIT_PROMPT_UNTRACKED="%{$gray%} ✱"
 
 # virtualenv settings
-ZSH_THEME_VIRTUALENV_PREFIX=" $FG[075]["
+ZSH_THEME_VIRTUALENV_PREFIX="%{$gray%}["
 ZSH_THEME_VIRTUALENV_SUFFIX="]%{$reset_color%}"
 
-# primary prompt
+# primary prompt - разделительная линия + чистый промпт на новой строке
 PS1='%{$gray%}${(l.$(dashed_line)..-.)}${PR_RST}
-%{$blue%}%~ %{$turquoise%}$(git_prompt_info) %{$purple%}%(!.#.») ${PR_RST}'
-
-# primary prompt when no git repo
-if [ -z "$(git_current_branch)" ]; then 
-PS1='%{$gray%}${(l.$(dashed_line)..-.)}${PR_RST}
-%{$blue%}%c %{$purple%}%(!.#.») ${PR_RST}'
-fi
+${PR_RST}'
 
 # Prompt when the last command was unsuccessful
 PS2='%{$red%}\ ${PR_RST}'
+
+# comprehensive right prompt with all information
 RPS1='${return_code}'
 
-# right prompt
+# Add virtualenv info if available
 (( $+functions[virtualenv_prompt_info] )) && RPS1+='$(virtualenv_prompt_info)'
+
+# Add git info
+RPS1+='%{$turquoise%}$(git_prompt_info)${PR_RST}'
+
+# Add current directory
+RPS1+=' %{$blue%}%~${PR_RST}'
+
+# Add user and time
 RPS1+=' %{$gray%}%n %T%{$reset_color%}'

@@ -16,6 +16,10 @@ vim.cmd('set guicursor=n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20')
 -- vim.cmd("inoremap <Down>  <ESC>:echoe 'Use j'<CR>")
 --
 vim.g.mapleader = " "
+vim.g.maplocalleader = " "
+
+-- Отключить встроенный treesitter highlighting
+vim.treesitter.stop()
 
 -- Opt settings
 vim.opt.mouse = 'a'
@@ -37,23 +41,62 @@ vim.keymap.set('n', '<c-h>', ':wincmd h<CR>')
 vim.keymap.set('n', '<c-l>', ':wincmd l<CR>')
 vim.api.nvim_set_keymap('v', '<D-c>', '"+y', { noremap = true, silent = true })
 
-function SWITCH_LANGUAGE()
-    local current_map = vim.o.keymap
-    if current_map == "russian-jcukenwin" then
-        vim.cmd("set keymap=")
-    else
-        vim.cmd("set keymap=russian-jcukenwin")
-    end
-end
+-- \y copies to system clipboard
+vim.keymap.set('n', '\\y', function()
+    local content = vim.fn.getreg('"')
+    vim.fn.setreg('+', content)
+    vim.schedule(function()
+        vim.notify(content, vim.log.levels.INFO, { title = "Copied to system clipboard", timeout = 1000 })
+    end)
+end, { noremap = true, silent = true, desc = "Copy internal buffer to system clipboard" })
 
--- Создаем горячую клавишу для переключения языка
-vim.api.nvim_set_keymap('n', '<C-Space>', ':lua SWITCH_LANGUAGE()<CR>', {noremap = true, silent = true})
+vim.keymap.set('v', '\\y', function()
+    vim.cmd('normal! "+y')
+end, { noremap = true, silent = true, desc = "Copy selection to system clipboard" })
 
 vim.keymap.set('n', '<leader>h', ':nohlsearch<CR>')
+
+-- Open terminal at bottom (full width)
+vim.keymap.set('n', '\\t', function()
+    vim.cmd('new')
+    vim.cmd('terminal')
+    vim.cmd('wincmd J')
+    vim.cmd('resize 10')
+    vim.cmd('startinsert')
+end, { noremap = true, silent = true, desc = "Open terminal" })
+
+-- Выход из терминала по Esc Esc или <leader>q
+vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = "Exit terminal mode" })
+vim.keymap.set('t', '<leader>q', '<C-\\><C-n>', { desc = "Exit terminal mode" })
 vim.wo.number = true
 
 vim.cmd("set scrolloff=999")
 vim.opt.termguicolors = true
+
+-- Quick exit with ` key
+local function quick_exit()
+    local modified = vim.bo.modified
+    if not modified then
+        local ok = pcall(vim.cmd, 'q')
+        if not ok then
+            local ok2 = pcall(vim.cmd, 'qall')
+            if not ok2 then
+                vim.cmd('qall!')
+            end
+        end
+    else
+        local ok = pcall(vim.cmd, 'wq')
+        if not ok then
+            local ok2 = pcall(vim.cmd, 'wqall')
+            if not ok2 then
+                vim.cmd('qall!')
+            end
+        end
+    end
+end
+
+vim.keymap.set('n', '`', quick_exit, { desc = "Quick exit", silent = true })
+
   vim.opt.guicursor = "n-v-c:block,i-ci-ve:ver25,r-cr:hor20,o:hor50"
   vim.api.nvim_exec([[
     let &t_SI = "\e[5 q"  " Вертикальная линия для режима вставки

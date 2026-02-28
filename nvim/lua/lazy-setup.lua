@@ -25,6 +25,7 @@ require("lazy").setup({
 	{ import = "plugins.proj" },
 	{ import = "plugins.themes" },
 	{ import = "plugins.training" },
+	{ import = "plugins.utils" },
     change_detection = {
         enabled = false,
         notify = false

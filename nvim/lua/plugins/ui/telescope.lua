@@ -41,6 +41,7 @@ return {
                     },
                 },
                 defaults = {
+                    winblend = 0,
                     mappings = {
                         n = {
                             [":q<cr>"] = require("telescope.actions").close,
@@ -49,6 +50,13 @@ return {
                 },
             })
             require("telescope").load_extension("ui-select")
+
+            -- Transparent background for telescope
+            vim.api.nvim_set_hl(0, "TelescopeNormal", { bg = "NONE" })
+            vim.api.nvim_set_hl(0, "TelescopeBorder", { bg = "NONE" })
+            vim.api.nvim_set_hl(0, "TelescopePromptNormal", { bg = "NONE" })
+            vim.api.nvim_set_hl(0, "TelescopeResultsNormal", { bg = "NONE" })
+            vim.api.nvim_set_hl(0, "TelescopePreviewNormal", { bg = "NONE" })
         end,
     },
 }

@@ -154,6 +154,25 @@ transparent_background = true,
 
 vim.cmd("colorscheme catppuccin-mocha")
 vim.g.theme_id = 1
+
+-- Apply transparent background after colorscheme changes
+local function apply_transparent_highlights()
+    vim.api.nvim_set_hl(0, "TelescopeNormal", { bg = "NONE" })
+    vim.api.nvim_set_hl(0, "TelescopeBorder", { bg = "NONE" })
+    vim.api.nvim_set_hl(0, "TelescopePromptNormal", { bg = "NONE" })
+    vim.api.nvim_set_hl(0, "TelescopeResultsNormal", { bg = "NONE" })
+    vim.api.nvim_set_hl(0, "TelescopePreviewNormal", { bg = "NONE" })
+    vim.api.nvim_set_hl(0, "NormalFloat", { bg = "NONE" })
+    vim.api.nvim_set_hl(0, "FloatBorder", { bg = "NONE" })
+end
+
+vim.api.nvim_create_autocmd("ColorScheme", {
+    pattern = "*",
+    callback = apply_transparent_highlights,
+})
+
+-- Apply immediately on startup
+apply_transparent_highlights()
 -- end themery block
 	end,
 }
