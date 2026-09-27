@@ -28,3 +28,50 @@ Host github.com
     IdentityFile ~/.ssh/personal_key
     IdentitiesOnly yes
 ServerAliveInterval 60
+
+Host proto
+    HostName 82.148.18.168
+    User root
+
+Host github-fitymico
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/id_fitymico
+    IdentitiesOnly yes
+
+# >>> pcomp >>>
+Host 192.168.1.254
+    User pluttan
+    Port 6000
+    IdentityFile ~/.ssh/id_pcomp
+Host 179.61.145.39
+    User pluttan
+    Port 2223
+    IdentityFile ~/.ssh/id_pcomp
+# <<< pcomp <<<
+
+# pcomp в дороге: LAN 192.168.1.254:6000 недоступен -> через публичный fvds-форвард
+# (157.22.189.111:2228 -> sshd pcomp:6000). Авторизация мак<->pcomp тем же ключом, fvds лишь TCP.
+Match host pcomp exec "! /usr/bin/nc -G 1 -w 2 192.168.1.254 6000 </dev/null | head -c 64 | grep -q ^SSH-"
+    HostName 157.22.189.111
+    Port 2228
+    StrictHostKeyChecking accept-new
+    ControlMaster auto
+    ControlPath ~/.ssh/cm-%r@%h-%p
+    ControlPersist 2m
+
+Host pcomp
+    HostName 192.168.1.254
+    Port 6000
+    User pluttan
+    IdentityFile /Users/pluttan/.ssh/id_pcomp
+    ConnectTimeout 8
+
+Host claude-vm
+    HostName 127.0.0.1
+    Port 2222
+    User root
+    IdentityFile ~/.local/share/xray-vm/mac_to_guest
+    IdentitiesOnly yes
+    StrictHostKeyChecking accept-new
+    UserKnownHostsFile ~/.local/share/xray-vm/known_hosts_guest
