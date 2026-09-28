@@ -67,6 +67,11 @@ Host pcomp
     IdentityFile /Users/pluttan/.ssh/id_pcomp
     ConnectTimeout 8
 
+Host vpnvm
+    HostName 10.98.0.2
+    User pluttan
+    ProxyJump pcomp
+
 Host claude-vm
     HostName 127.0.0.1
     Port 2222
