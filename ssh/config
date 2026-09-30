@@ -66,11 +66,18 @@ Host pcomp
     User pluttan
     IdentityFile /Users/pluttan/.ssh/id_pcomp
     ConnectTimeout 8
+    ServerAliveInterval 15
+    ServerAliveCountMax 4
 
+# vpnvm по host-only линку pcomp<->vpnvm, мимо шлюза vpngw
 Host vpnvm
-    HostName 10.98.0.2
+    HostName 10.101.0.2
+    HostKeyAlias vpnvm
+    StrictHostKeyChecking accept-new
     User pluttan
     ProxyJump pcomp
+    ServerAliveInterval 15
+    ServerAliveCountMax 4
 
 Host claude-vm
     HostName 127.0.0.1

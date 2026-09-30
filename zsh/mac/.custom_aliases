@@ -1,5 +1,5 @@
 # vim: ft=bash 
-alias py='/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11'
+alias py='/opt/homebrew/bin//python3.14'
 alias code='open -a "/Applications/Visual Studio Code.app"'
 alias PDFprint='open "/Users/pluttan/Desktop/проекты/printbookpdf/books" && py "/Users/pluttan/Desktop/проекты/printbookpdf/printBookPDF.py"' 
 alias latexindent='conda run latexindent.pl -s '
@@ -22,7 +22,12 @@ alias chcodejs='find . -name "*.js" | xargs wc -l'
 alias chcodets='find . -name "*.ts" | xargs wc -l'
 alias sug='gh copilot --shell-out suggest suggest command for mac os:'
 alias exp='gh copilot --shell-out explain'
+alias claude='claude --dangerously-skip-permissions'
 
 fl=$p/freelance
 pt=$p/pets
 
+
+# vpnvm без обрывов: mosh до pcomp переживает сон мака и смену Wi-Fi,
+# дальше ssh по локальному линку pcomp<->vpnvm и сразу в tmux
+vm() { mosh pcomp -- ssh -t vpnvm 'tmux attach 2>/dev/null || tmux new'; }
