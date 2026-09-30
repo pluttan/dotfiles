@@ -1,6 +1,8 @@
 #!/bin/bash
 # netwatch — сторож Wi-Fi на маке: раз в 20 с пишет, к какой точке подключён мак
 # и какое звено отвечает — роутер, интернет в обход VPN, интернет через VPN.
+# Связи нет два замера подряд (часто после сна с закрытой крышкой) — сам
+# переподключает Wi-Fi, как это делают руками, не чаще раза в 3 минуты.
 #   netwatch.sh run            цикл (его держит LaunchAgent com.pluttan.netwatch)
 #   netwatch.sh report [дней]  эпизоды без интернета и чем они кончились
 # Signed: pluttan
@@ -24,9 +26,19 @@ wifi() {
 
 ok() { "$@" >/dev/null 2>&1 && echo ok || echo FAIL; }
 
+heal() {
+    # Выключить и включить Wi-Fi: мак заново подключается к сети, VPN видит смену сети.
+    networksetup -setairportpower en0 off && sleep 3 && networksetup -setairportpower en0 on
+}
+
 run() {
     mkdir -p "$LOGDIR"
+    bad=0 last_heal=0 prev=$(date +%s)
     while :; do
+        now=$(date +%s)
+        # Цикл стоит, пока мак спит, — большой разрыв между замерами и есть пробуждение.
+        (( now - prev > 90 )) && echo "$(date '+%F %T') wake: спал $(( (now - prev) / 60 )) мин" >> "$LOGDIR/$(date +%F).log"
+        prev=$now
         ip=$(ipconfig getifaddr en0 || echo -)
         lan=$(ok ping -c1 -t2 -b en0 "$ROUTER")   # мимо VPN-туннеля
         direct=$(ok ping -c1 -t2 -b en0 "$PROBE")
@@ -34,6 +46,13 @@ run() {
         [ "$code" = 204 ] && via=ok || via="FAIL($code)"
         printf '%s ip=%s %s lan=%s direct=%s vpn=%s\n' "$(date '+%F %T')" "$ip" "$(wifi)" \
             "$lan" "$direct" "$via" >> "$LOGDIR/$(date +%F).log"
+        if [ "$lan" = ok ] && [ "$via" = ok ]; then bad=0; else bad=$((bad + 1)); fi
+        if (( bad >= 2 && $(date +%s) - last_heal > 180 )); then
+            echo "$(date '+%F %T') heal: связи нет ${bad} замера — переподключаю Wi-Fi" >> "$LOGDIR/$(date +%F).log"
+            heal >> "$LOGDIR/$(date +%F).log" 2>&1
+            last_heal=$(date +%s) bad=0
+            sleep 10   # дать сети подняться
+        fi
         find "$LOGDIR" -name '*.log' -mtime +14 -delete 2>/dev/null
         sleep 20
     done
@@ -50,6 +69,7 @@ report() {
             if (d=="FAIL" && v=="ok") return "только прямой пинг (VPN работает) — не страшно"
             return "?"
         }
+        / (wake|heal): / { print "  " $0; next }
         {
             split($0, f, " "); l=d=v=""
             for (i in f) { if (f[i] ~ /^lan=/) l=substr(f[i],5); if (f[i] ~ /^direct=/) d=substr(f[i],8); if (f[i] ~ /^vpn=/) v=substr(f[i],5) }
