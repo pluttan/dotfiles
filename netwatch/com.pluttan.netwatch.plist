@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key><string>com.pluttan.netwatch</string>
+    <key>ProgramArguments</key>
+    <array><string>/bin/bash</string><string>HOME_PLACEHOLDER/.local/bin/netwatch</string><string>run</string></array>
+    <key>RunAtLoad</key><true/>
+    <key>KeepAlive</key><true/>
+    <key>ProcessType</key><string>Background</string>
+    <key>StandardErrorPath</key><string>HOME_PLACEHOLDER/Library/Logs/netwatch/agent.err</string>
+</dict>
+</plist>
