@@ -21,5 +21,5 @@ echo -n "$FIRST_CHAR" > "$STATE_FILE"
 # If previous char was a spinner and now it's not — notify
 if [ -n "$PREV_CHAR" ] && [ "$PREV_CHAR" != "$FIRST_CHAR" ] && [ "$FIRST_CHAR" = "✳" ]; then
     /opt/homebrew/bin/tmux display-message "Claude Code: ${TITLE:2}"
-    afplay /System/Library/Sounds/Pop.aiff &
+    afplay /Volumes/pr/dotfiles/sounds/notify.mp3 &
 fi
