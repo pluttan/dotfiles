@@ -27,7 +27,7 @@
 #   kittywall.sh auto      новая картинка в конец истории (раз в 15 минут, LaunchAgent)
 #   kittywall.sh next      вперёд по истории, с последней — новая картинка
 #   kittywall.sh prev      назад по истории
-#   kittywall.sh brighter  фон ярче (TARGET выше на TARGET_STEP)
+#   kittywall.sh brighter  фон ярче (tint меньше на TINT_STEP)
 #   kittywall.sh darker    фон темнее
 #   kittywall.sh keep      лайк: сохранить текущую в пул и запомнить её теги
 #   kittywall.sh fill      докачать очередь (сам зовётся в фоне после смены)
@@ -67,7 +67,8 @@ QUEUE_SIZE=10
 KEEP_BACK=10
 # Средняя картинка (L около 0.4) при TARGET 0.15 получает tint 0.90.
 TARGET_DEFAULT=0.15
-TARGET_STEP=0.005
+# Одно нажатие сдвигает tint текущей картинки на TINT_STEP, какая бы она ни была.
+TINT_STEP=0.015
 # Яркость #1e1e2e — base из Catppuccin Mocha, им kitty и подмешивает tint.
 BASE_LUMA=0.125
 TINT_MIN=0.20
@@ -178,7 +179,7 @@ retint() {
     target=$(cat "$STATE/target" 2>/dev/null || echo "$TARGET_DEFAULT")
     l=$(cat "$STATE/luma" 2>/dev/null || echo 0.4)
     t=$(awk -v l="$l" -v b="$BASE_LUMA" -v tg="$target" -v lo="$TINT_MIN" -v hi="$TINT_MAX" \
-        'BEGIN {t = (l - b > 0.01) ? (l - tg) / (l - b) : lo; if (t < lo) t = lo; if (t > hi) t = hi; printf "%.2f", t}')
+        'BEGIN {t = (l - b > 0.01) ? (l - tg) / (l - b) : lo; if (t < lo) t = lo; if (t > hi) t = hi; printf "%.3f", t}')
     echo "background_tint $t" > "$TINT_CONF"
     for sock in /tmp/kitty-sock-*; do
         [ -S "$sock" ] || continue
@@ -291,11 +292,13 @@ prev() {
     [ -f "$(slot "$n").png" ] && show "$n"
 }
 
-# Сдвинуть TARGET на $1 и пересчитать tint текущей картинки.
+# Сдвинуть TARGET так, чтобы tint текущей картинки ушёл на $1 (из формулы в
+# retint: TARGET меняется на −Δt·(L − BASE)), и пересчитать tint.
 target() {
-    local cur
+    local cur l
     cur=$(cat "$STATE/target" 2>/dev/null || echo "$TARGET_DEFAULT")
-    awk -v c="$cur" -v d="$1" 'BEGIN {v = c + d; if (v < 0.02) v = 0.02; if (v > 0.6) v = 0.6; printf "%.3f\n", v}' > "$STATE/target"
+    l=$(cat "$STATE/luma" 2>/dev/null || echo 0.4)
+    awk -v c="$cur" -v dt="$1" -v l="$l" -v b="$BASE_LUMA" 'BEGIN {k = l - b; if (k < 0.05) k = 0.05; v = c - dt * k; if (v < 0.02) v = 0.02; if (v > 0.6) v = 0.6; printf "%.3f\n", v}' > "$STATE/target"
     retint
 }
 
@@ -334,8 +337,8 @@ case "$1" in
     auto) fresh ;;
     next) next ;;
     prev) prev ;;
-    brighter) target "$TARGET_STEP" ;;
-    darker) target "-$TARGET_STEP" ;;
+    brighter) target "-$TINT_STEP" ;;
+    darker) target "$TINT_STEP" ;;
     keep) keep ;;
     fill) fill ;;
     info)
