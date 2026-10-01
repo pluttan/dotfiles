@@ -4,7 +4,12 @@
 # выдачи, отсортированной по числу добавлений в избранное, — так мусора почти
 # нет. Однотонные (логотип или мелкая картинка на ровном фоне: больше
 # FLAT_MAX пикселей близки к основному цвету) отсеиваются. Уже показанные
-# запоминаются в seen и второй раз не попадаются. Нет сети — по кругу из своего пула
+# запоминаются в seen и второй раз не попадаются.
+# Лайк (keep) кладёт картинку в свой пул и запоминает её теги в LIKED_TAGS:
+# LIKED_SHARE процентов смен показывают случайную лайкнутую, а SIMILAR_SHARE
+# процентов новых ищутся по случайному тегу лайкнутых — чем у большего числа
+# лайков тег есть, тем чаще он выпадает. Поиск похожих напрямую (like:id)
+# wallhaven закрыл проверкой Cloudflare, поэтому через теги. Нет сети — по кругу из своего пула
 # dotfiles/kitty/wallpapers. Впрок держится очередь QUEUE из QUEUE_SIZE уже
 # скачанных и ужатых до 2560 px в PNG картинок — следующая встаёт мгновенно,
 # а очередь сама дозаполняется в фоне. Показанная картинка ложится в историю
@@ -24,7 +29,7 @@
 #   kittywall.sh prev      назад по истории
 #   kittywall.sh brighter  фон ярче (TARGET выше на TARGET_STEP)
 #   kittywall.sh darker    фон темнее
-#   kittywall.sh keep      понравилась — сохранить текущую в пул
+#   kittywall.sh keep      лайк: сохранить текущую в пул и запомнить её теги
 #   kittywall.sh fill      докачать очередь (сам зовётся в фоне после смены)
 #   kittywall.sh info      что сейчас на фоне
 # Signed: pluttan
@@ -54,6 +59,9 @@ THEMES=(
     "catppuccin|catppuccin|110|1920x1080"
 )
 TOP_SHARE=30
+LIKED_TAGS="$STATE/liked-tags"
+LIKED_SHARE=15
+SIMILAR_SHARE=25
 FLAT_MAX=0.72
 QUEUE_SIZE=10
 KEEP_BACK=10
@@ -77,8 +85,14 @@ search() {
 # Случайная непоказанная картинка по случайной теме: печатает "id url тема"
 # или ничего. Число страниц темы запоминается на неделю в PAGES.
 pick_remote() {
-    local name q cats size pages page cache
-    IFS='|' read -r name q cats size <<< "${THEMES[RANDOM % ${#THEMES[@]}]}"
+    local name q cats size pages page cache tag
+    if [ -s "$LIKED_TAGS" ] && [ $(( RANDOM % 100 )) -lt "$SIMILAR_SHARE" ]; then
+        # Строка тега: "id имя"; одинаковые строки от разных лайков — вес.
+        tag=$(awk -v n=$RANDOM 'NR == 1 {srand(n)} {a[NR] = $0} END {print a[int(rand() * NR) + 1]}' "$LIKED_TAGS")
+        name="tag-${tag%% *}" q="id:${tag%% *}" cats=111 size=1920x1080
+    else
+        IFS='|' read -r name q cats size <<< "${THEMES[RANDOM % ${#THEMES[@]}]}"
+    fi
     cache="$STATE/pages/$name"
     mkdir -p "$STATE/pages"
     if [ -n "$(find "$cache" -mtime -7 2>/dev/null)" ]; then
@@ -110,6 +124,16 @@ pick_local() {
     [ -n "$pick" ] || pick=$(printf '%s\n' "$files" | head -n1)
     echo "$pick" > "$STATE/last-local"
     echo "$pick"
+}
+
+# В LIKED_SHARE процентах случаев — случайная лайкнутая из пула, только не та,
+# что сейчас на экране. Иначе ничего.
+pick_liked() {
+    local now
+    [ -d "$POOL" ] && [ $(( RANDOM % 100 )) -lt "$LIKED_SHARE" ] || return
+    now=$(cut -d' ' -f2 "$(slot "$(pos)").txt" 2>/dev/null)
+    find "$POOL" -maxdepth 1 -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' \) |
+        grep -vxF "$now" | awk -v n=$RANDOM 'NR == 1 {srand(n)} {a[NR] = $0} END {if (NR) print a[int(rand() * NR) + 1]}'
 }
 
 # Номер текущей картинки в истории и последний номер (0, если истории нет).
@@ -232,7 +256,11 @@ fresh() {
     l=$(last)
     n=$(( ${l:-0} + 1 ))
     q=$(ls "$QUEUE" | sed -n 's/\.png$//p' | sort | head -n1)
-    if [ -n "$q" ]; then
+    file=$(pick_liked)
+    if [ -n "$file" ]; then
+        sips -s format png -Z 2560 "$file" --out "$(slot "$n").png" >/dev/null 2>&1 || return 1
+        echo "liked $file" > "$(slot "$n").txt"
+    elif [ -n "$q" ]; then
         for ext in txt luma png; do
             [ -f "$QUEUE/$q.$ext" ] && mv "$QUEUE/$q.$ext" "$(slot "$n").$ext"
         done
@@ -272,10 +300,24 @@ target() {
 }
 
 keep() {
-    local id
-    id=$(cut -d' ' -f1 "$(slot "$(pos)").txt")
-    [ "$id" = local ] && { echo "уже из пула"; return; }
-    cp "$CURRENT" "$POOL/$id.png" && echo "сохранено: $POOL/$id.png"
+    local id url msg
+    read -r id url _ < "$(slot "$(pos)").txt"
+    if [ "$id" = local ] || [ "$id" = liked ] || [ -f "$POOL/$id.png" ]; then
+        msg="уже в лайках"
+    elif cp "$CURRENT" "$POOL/$id.png"; then
+        # Теги картинки — для поиска похожих.
+        curl -sf --max-time 20 -A "Mozilla/5.0 (Macintosh) kittywall" "https://wallhaven.cc/api/v1/w/$id" |
+            /usr/bin/python3 -c '
+import json, sys
+for t in json.load(sys.stdin)["data"]["tags"]:
+    print(t["id"], t["name"])
+' >> "$LIKED_TAGS"
+        msg="лайк: $(ls "$POOL" | wc -l | tr -d ' ') в коллекции"
+    else
+        msg="не сохранилось: нет /Volumes/pr?"
+    fi
+    echo "$msg"
+    osascript -e "display notification \"$msg\" with title \"kittywall\"" 2>/dev/null
 }
 
 mkdir -p "$HISTORY" "$QUEUE"
