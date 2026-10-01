@@ -19,6 +19,10 @@
 #   kittywall.sh info      что сейчас на фоне
 # Signed: pluttan
 
+# kitty запускает скрипт с локалью пользователя, а в ru_RU awk пишет дробь
+# через запятую (0,75) — kitty такую строку не принимает.
+export LC_ALL=C
+
 POOL=/Volumes/pr/dotfiles/kitty/wallpapers
 STATE="$HOME/.local/share/kittywall"
 HISTORY="$STATE/history"
@@ -116,7 +120,7 @@ prev() {
 # Сдвинуть background_tint на $1 и перечитать конфиг во всех kitty.
 tint() {
     local cur new
-    cur=$(awk '{print $2}' "$TINT_CONF" 2>/dev/null)
+    cur=$(awk '{print $2}' "$TINT_CONF" 2>/dev/null | tr , .)
     new=$(awk -v c="${cur:-$TINT_DEFAULT}" -v d="$1" 'BEGIN {v = c + d; if (v < 0) v = 0; if (v > 1) v = 1; printf "%.2f", v}')
     echo "background_tint $new" > "$TINT_CONF"
     for sock in /tmp/kitty-sock-*; do
