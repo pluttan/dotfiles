@@ -2,9 +2,11 @@
 # kittywall — каждый раз новый фон kitty на маке. Картинка берётся случайной
 # с wallhaven.cc по одной из тем QUERIES; уже показанные запоминаются в seen и
 # второй раз не попадаются. Нет сети — по кругу из своего пула
-# dotfiles/kitty/wallpapers. Каждая показанная картинка, ужатая до 2560 px в
-# PNG, ложится в историю HISTORY под номером по порядку (хранится KEEP_LAST
-# последних), так по ней можно ходить назад и вперёд. Текущая копируется в
+# dotfiles/kitty/wallpapers. Впрок держится очередь QUEUE из QUEUE_SIZE уже
+# скачанных и ужатых до 2560 px в PNG картинок — следующая встаёт мгновенно,
+# а очередь сама дозаполняется в фоне. Показанная картинка ложится в историю
+# HISTORY под номером по порядку; позади текущей хранится KEEP_BACK, так по
+# ней можно ходить назад и вперёд. Текущая копируется в
 # CURRENT (на него смотрит background_image в kitty.conf, так новые окна сразу
 # открываются с ней) и отправляется во все запущенные kitty через remote
 # control (listen_on unix:/tmp/kitty-sock-<pid>).
@@ -20,6 +22,7 @@
 #   kittywall.sh brighter  фон ярче (TARGET выше на TARGET_STEP)
 #   kittywall.sh darker    фон темнее
 #   kittywall.sh keep      понравилась — сохранить текущую в пул
+#   kittywall.sh fill      докачать очередь (сам зовётся в фоне после смены)
 #   kittywall.sh info      что сейчас на фоне
 # Signed: pluttan
 
@@ -30,18 +33,20 @@ export LC_ALL=C
 POOL=/Volumes/pr/dotfiles/kitty/wallpapers
 STATE="$HOME/.local/share/kittywall"
 HISTORY="$STATE/history"
+QUEUE="$STATE/queue"
 CURRENT="$STATE/current.png"
 TINT_CONF="$STATE/tint.conf"
 KITTY=/Applications/kitty.app/Contents/MacOS/kitty
 API=https://wallhaven.cc/api/v1/search
 QUERIES=("landscape" "mountains" "lighthouse" "pixel art landscape" "night city" "forest" "sea" "digital art landscape")
-KEEP_LAST=30
+QUEUE_SIZE=10
+KEEP_BACK=10
 # Средняя картинка (L около 0.4) при TARGET 0.15 получает tint 0.90.
 TARGET_DEFAULT=0.15
 TARGET_STEP=0.015
 # Яркость #1e1e2e — base из Catppuccin Mocha, им kitty и подмешивает tint.
 BASE_LUMA=0.125
-TINT_MIN=0.60
+TINT_MIN=0.20
 TINT_MAX=0.97
 
 # Случайная непоказанная картинка с wallhaven: печатает "id url" или ничего.
@@ -119,7 +124,9 @@ retint() {
 show() {
     cp "$(slot "$1").png" "$CURRENT.tmp" && mv "$CURRENT.tmp" "$CURRENT" || return 1
     echo "$1" > "$STATE/pos"
-    luma "$CURRENT" > "$STATE/luma" || rm -f "$STATE/luma"
+    # Яркость считается один раз и лежит рядом с картинкой в истории.
+    [ -s "$(slot "$1").luma" ] || luma "$CURRENT" > "$(slot "$1").luma"
+    cp "$(slot "$1").luma" "$STATE/luma" 2>/dev/null || rm -f "$STATE/luma"
     # Сперва новый tint, потом картинка: яркая не мелькнёт со старым.
     retint
     for sock in /tmp/kitty-sock-*; do
@@ -128,29 +135,64 @@ show() {
     done
 }
 
-# Новая картинка в конец истории и на экран.
+# Скачать с wallhaven одну непоказанную картинку в $1.png, рядом $1.txt
+# ("id url") и $1.luma. Не вышло (нет сети, сбой) — код возврата 1.
+download() {
+    local id url
+    read -r id url < <(pick_remote)
+    [ -n "$url" ] || return 1
+    curl -sf --max-time 120 -o "$1.download" "$url" || { rm -f "$1.download"; return 1; }
+    # sips приводит любой формат к PNG и ужимает до 2560 px по длинной стороне.
+    sips -s format png -Z 2560 "$1.download" --out "$1.png" >/dev/null 2>&1
+    local ok=$?
+    rm -f "$1.download"
+    [ $ok = 0 ] || { rm -f "$1.png"; return 1; }
+    echo "$id" >> "$STATE/seen"
+    echo "$id $url" > "$1.txt"
+    luma "$1.png" > "$1.luma" || rm -f "$1.luma"
+}
+
+# Докачать очередь до QUEUE_SIZE. Второй экземпляр сразу выходит; замок
+# старше 10 минут считается брошенным упавшим процессом.
+fill() {
+    find "$STATE/filllock" -maxdepth 0 -mmin +10 -exec rmdir {} \; 2>/dev/null
+    mkdir "$STATE/filllock" 2>/dev/null || return 0
+    trap 'rmdir "$STATE/filllock" 2>/dev/null' EXIT
+    local name
+    while [ "$(ls "$QUEUE" | grep -c '\.png$')" -lt "$QUEUE_SIZE" ]; do
+        # Имя по времени — очередь берётся по порядку скачивания.
+        name=$(printf '%010d-%05d' "$(date +%s)" "$RANDOM")
+        download "$QUEUE/.part" || break
+        for ext in txt luma png; do
+            [ -f "$QUEUE/.part.$ext" ] && mv "$QUEUE/.part.$ext" "$QUEUE/$name.$ext"
+        done
+    done
+}
+
+# Новая картинка в конец истории и на экран: первая из очереди, пусто — качаем
+# сейчас, нет сети — из своего пула. Потом очередь дозаполняется в фоне.
 fresh() {
-    local id url file n l
+    local n l q file
     l=$(last)
     n=$(( ${l:-0} + 1 ))
-    read -r id url < <(pick_remote)
-    if [ -n "$url" ] && curl -sf --max-time 120 -o "$STATE/download" "$url"; then
-        file="$STATE/download"
-    else
-        id=local url=$(pick_local)
-        file=$url
+    q=$(ls "$QUEUE" | sed -n 's/\.png$//p' | sort | head -n1)
+    if [ -n "$q" ]; then
+        for ext in txt luma png; do
+            [ -f "$QUEUE/$q.$ext" ] && mv "$QUEUE/$q.$ext" "$(slot "$n").$ext"
+        done
+    elif ! download "$(slot "$n")"; then
+        file=$(pick_local)
+        [ -n "$file" ] || return 1
+        sips -s format png -Z 2560 "$file" --out "$(slot "$n").png" >/dev/null 2>&1 || return 1
+        echo "local $file" > "$(slot "$n").txt"
     fi
-    [ -n "$file" ] || return 1
-    # sips приводит любой формат к PNG и ужимает до 2560 px по длинной стороне.
-    sips -s format png -Z 2560 "$file" --out "$(slot "$n").png" >/dev/null 2>&1 || return 1
-    rm -f "$STATE/download"
-    echo "$id $url" > "$(slot "$n").txt"
-    [ "$id" = local ] || echo "$id" >> "$STATE/seen"
     show "$n"
-    # Старше KEEP_LAST последних — удаляем.
-    ls "$HISTORY" | sed -n 's/\.png$//p' | sort -n |
-        awk -v k="$KEEP_LAST" '{a[NR] = $0} END {for (i = 1; i <= NR - k; i++) print a[i]}' |
-        while read -r old; do rm -f "$HISTORY/$old.png" "$HISTORY/$old.txt"; done
+    # Позади текущей держим KEEP_BACK картинок, что старше — удаляем.
+    ls "$HISTORY" | sed -n 's/^0*\([0-9][0-9]*\)\.png$/\1/p' |
+        while read -r old; do
+            [ "$old" -lt $(( n - KEEP_BACK )) ] && rm -f "$(slot "$old")".*
+        done
+    nohup /bin/bash "$0" fill >/dev/null 2>&1 &
 }
 
 next() {
@@ -180,10 +222,13 @@ keep() {
     cp "$CURRENT" "$POOL/$id.png" && echo "сохранено: $POOL/$id.png"
 }
 
-mkdir -p "$HISTORY"
-# Нажатия подряд не должны качать две картинки разом: второе ждёт первое.
-for _ in $(seq 100); do mkdir "$STATE/lock" 2>/dev/null && break; sleep 0.3; done
-trap 'rmdir "$STATE/lock" 2>/dev/null' EXIT
+mkdir -p "$HISTORY" "$QUEUE"
+# Нажатия подряд не должны менять фон разом: второе ждёт первое. Докачка
+# очереди идёт мимо этого замка, у неё свой.
+if [ "$1" != fill ] && [ "$1" != info ]; then
+    for _ in $(seq 100); do mkdir "$STATE/lock" 2>/dev/null && break; sleep 0.3; done
+    trap 'rmdir "$STATE/lock" 2>/dev/null' EXIT
+fi
 touch "$STATE/seen"
 [ -f "$TINT_CONF" ] || echo "background_tint 0.90" > "$TINT_CONF"
 
@@ -194,9 +239,10 @@ case "$1" in
     brighter) target "$TARGET_STEP" ;;
     darker) target "-$TARGET_STEP" ;;
     keep) keep ;;
+    fill) fill ;;
     info)
         echo "$(cat "$(slot "$(pos)").txt" 2>/dev/null)  [$(pos) из $(last)]"
         echo "яркость картинки $(cat "$STATE/luma" 2>/dev/null), цель $(cat "$STATE/target" 2>/dev/null || echo "$TARGET_DEFAULT"), $(cat "$TINT_CONF")"
-        echo "показано с wallhaven: $(wc -l < "$STATE/seen")" ;;
-    *) echo "usage: $0 auto|next|prev|brighter|darker|keep|info" >&2; exit 1 ;;
+        echo "в очереди: $(ls "$QUEUE" | grep -c '\.png$'), показано с wallhaven: $(wc -l < "$STATE/seen")" ;;
+    *) echo "usage: $0 auto|next|prev|brighter|darker|keep|fill|info" >&2; exit 1 ;;
 esac

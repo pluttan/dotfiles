@@ -7,6 +7,8 @@
     <array><string>/bin/bash</string><string>HOME_PLACEHOLDER/.local/bin/kittywall</string><string>auto</string></array>
     <key>RunAtLoad</key><true/>
     <key>StartInterval</key><integer>900</integer>
+    <!-- Не убивать фоновую докачку очереди, когда сам запуск кончился -->
+    <key>AbandonProcessGroup</key><true/>
     <key>ProcessType</key><string>Background</string>
     <key>StandardErrorPath</key><string>HOME_PLACEHOLDER/Library/Logs/kittywall.err</string>
 </dict>
