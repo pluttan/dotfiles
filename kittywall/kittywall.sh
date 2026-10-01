@@ -67,7 +67,7 @@ QUEUE_SIZE=10
 KEEP_BACK=10
 # Средняя картинка (L около 0.4) при TARGET 0.15 получает tint 0.90.
 TARGET_DEFAULT=0.15
-TARGET_STEP=0.015
+TARGET_STEP=0.005
 # Яркость #1e1e2e — base из Catppuccin Mocha, им kitty и подмешивает tint.
 BASE_LUMA=0.125
 TINT_MIN=0.20
