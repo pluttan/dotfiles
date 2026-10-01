@@ -1,8 +1,8 @@
-# kittywall — смена фона kitty раз в 15 минут. Signed: pluttan
+# kittywall — новый фон kitty с wallhaven раз в 15 минут. Signed: pluttan
 
 AGENT := $(HOME)/Library/LaunchAgents/com.pluttan.kittywall.plist
 
-.PHONY: all install uninstall next
+.PHONY: all install uninstall next keep
 
 all: install
 
@@ -19,3 +19,6 @@ uninstall:
 
 next:
 	$(HOME)/.local/bin/kittywall next
+
+keep:
+	$(HOME)/.local/bin/kittywall keep
