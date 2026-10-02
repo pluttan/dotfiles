@@ -9,7 +9,10 @@
 # LIKED_SHARE процентов смен показывают случайную лайкнутую, а SIMILAR_SHARE
 # процентов новых ищутся по случайному тегу лайкнутых — чем у большего числа
 # лайков тег есть, тем чаще он выпадает. Поиск похожих напрямую (like:id)
-# wallhaven закрыл проверкой Cloudflare, поэтому через теги. Нет сети — по кругу из своего пула
+# wallhaven закрыл проверкой Cloudflare, поэтому через теги.
+# Дизлайк (dislike) убирает картинку из истории и из лайков, сразу листает
+# дальше, а её теги пишет в DISLIKED_TAGS: каждый такой тег гасит один такой
+# же из лайкнутых при поиске похожих. Нет сети — по кругу из своего пула
 # dotfiles/kitty/wallpapers. Впрок держится очередь QUEUE из QUEUE_SIZE уже
 # скачанных и ужатых до 2560 px в PNG картинок — следующая встаёт мгновенно,
 # а очередь сама дозаполняется в фоне. Показанная картинка ложится в историю
@@ -30,6 +33,7 @@
 #   kittywall.sh brighter  фон ярче (tint меньше на TINT_STEP)
 #   kittywall.sh darker    фон темнее
 #   kittywall.sh keep      лайк: сохранить текущую в пул и запомнить её теги
+#   kittywall.sh dislike   дизлайк: убрать текущую и показать следующую
 #   kittywall.sh fill      докачать очередь (сам зовётся в фоне после смены)
 #   kittywall.sh info      что сейчас на фоне
 # Signed: pluttan
@@ -60,6 +64,7 @@ THEMES=(
 )
 TOP_SHARE=30
 LIKED_TAGS="$STATE/liked-tags"
+DISLIKED_TAGS="$STATE/disliked-tags"
 LIKED_SHARE=15
 SIMILAR_SHARE=25
 FLAT_MAX=0.72
@@ -87,9 +92,15 @@ search() {
 # или ничего. Число страниц темы запоминается на неделю в PAGES.
 pick_remote() {
     local name q cats size pages page cache tag
-    if [ -s "$LIKED_TAGS" ] && [ $(( RANDOM % 100 )) -lt "$SIMILAR_SHARE" ]; then
-        # Строка тега: "id имя"; одинаковые строки от разных лайков — вес.
-        tag=$(awk -v n=$RANDOM 'NR == 1 {srand(n)} {a[NR] = $0} END {print a[int(rand() * NR) + 1]}' "$LIKED_TAGS")
+    # Строка тега: "id имя"; одинаковые строки от разных лайков — вес, каждая
+    # такая же строка из дизлайков этот вес на единицу снимает.
+    [ -s "$LIKED_TAGS" ] && [ $(( RANDOM % 100 )) -lt "$SIMILAR_SHARE" ] &&
+        tag=$(touch "$DISLIKED_TAGS"; awk -v n=$RANDOM '
+            NR == FNR {dis[$0]++; next}
+            dis[$0] > 0 {dis[$0]--; next}
+            {a[++k] = $0}
+            END {srand(n); if (k) print a[int(rand() * k) + 1]}' "$DISLIKED_TAGS" "$LIKED_TAGS")
+    if [ -n "$tag" ]; then
         name="tag-${tag%% *}" q="id:${tag%% *}" cats=111 size=1920x1080
     else
         IFS='|' read -r name q cats size <<< "${THEMES[RANDOM % ${#THEMES[@]}]}"
@@ -280,16 +291,26 @@ fresh() {
     nohup /bin/bash "$0" fill >/dev/null 2>&1 &
 }
 
+# Ближайший существующий номер истории после (next) или до (prev) $1:
+# после дизлайка в нумерации бывают дыры.
+near() {
+    ls "$HISTORY" | sed -n 's/^0*\([0-9][0-9]*\)\.png$/\1/p' |
+        awk -v p="$1" -v dir="$2" '
+            dir == "next" && $1 > p && (r == "" || $1 < r) {r = $1}
+            dir == "prev" && $1 < p && (r == "" || $1 > r) {r = $1}
+            END {print r}'
+}
+
 next() {
     local n
-    n=$(( $(pos) + 1 ))
-    if [ -f "$(slot "$n").png" ]; then show "$n"; else fresh; fi
+    n=$(near "$(pos)" next)
+    if [ -n "$n" ]; then show "$n"; else fresh; fi
 }
 
 prev() {
     local n
-    n=$(( $(pos) - 1 ))
-    [ -f "$(slot "$n").png" ] && show "$n"
+    n=$(near "$(pos)" prev)
+    [ -n "$n" ] && show "$n"
 }
 
 # Сдвинуть TARGET так, чтобы tint текущей картинки ушёл на $1 (из формулы в
@@ -302,6 +323,35 @@ target() {
     retint
 }
 
+# Теги картинки wallhaven $1 строками "id имя".
+tags() {
+    curl -sf --max-time 20 -A "Mozilla/5.0 (Macintosh) kittywall" "https://wallhaven.cc/api/v1/w/$1" |
+        /usr/bin/python3 -c '
+import json, sys
+for t in json.load(sys.stdin)["data"]["tags"]:
+    print(t["id"], t["name"])
+'
+}
+
+notify() {
+    echo "$1"
+    osascript -e "display notification \"$1\" with title \"kittywall\"" 2>/dev/null
+}
+
+dislike() {
+    local n id url
+    n=$(pos)
+    read -r id url _ < "$(slot "$n").txt"
+    case "$id" in
+        liked) rm -f "$url" ;;
+        local) ;;
+        *) rm -f "$POOL/$id.png"; tags "$id" >> "$DISLIKED_TAGS" ;;
+    esac
+    rm -f "$(slot "$n")".*
+    notify "дизлайк: больше не покажу"
+    next
+}
+
 keep() {
     local id url msg
     read -r id url _ < "$(slot "$(pos)").txt"
@@ -309,18 +359,12 @@ keep() {
         msg="уже в лайках"
     elif cp "$CURRENT" "$POOL/$id.png"; then
         # Теги картинки — для поиска похожих.
-        curl -sf --max-time 20 -A "Mozilla/5.0 (Macintosh) kittywall" "https://wallhaven.cc/api/v1/w/$id" |
-            /usr/bin/python3 -c '
-import json, sys
-for t in json.load(sys.stdin)["data"]["tags"]:
-    print(t["id"], t["name"])
-' >> "$LIKED_TAGS"
+        tags "$id" >> "$LIKED_TAGS"
         msg="лайк: $(ls "$POOL" | wc -l | tr -d ' ') в коллекции"
     else
         msg="не сохранилось: нет /Volumes/pr?"
     fi
-    echo "$msg"
-    osascript -e "display notification \"$msg\" with title \"kittywall\"" 2>/dev/null
+    notify "$msg"
 }
 
 mkdir -p "$HISTORY" "$QUEUE"
@@ -340,10 +384,11 @@ case "$1" in
     brighter) target "-$TINT_STEP" ;;
     darker) target "$TINT_STEP" ;;
     keep) keep ;;
+    dislike) dislike ;;
     fill) fill ;;
     info)
         echo "$(cat "$(slot "$(pos)").txt" 2>/dev/null)  [$(pos) из $(last)]"
         echo "яркость картинки $(cat "$STATE/luma" 2>/dev/null), цель $(cat "$STATE/target" 2>/dev/null || echo "$TARGET_DEFAULT"), $(cat "$TINT_CONF")"
         echo "в очереди: $(ls "$QUEUE" | grep -c '\.png$'), показано с wallhaven: $(wc -l < "$STATE/seen")" ;;
-    *) echo "usage: $0 auto|next|prev|brighter|darker|keep|fill|info" >&2; exit 1 ;;
+    *) echo "usage: $0 auto|next|prev|brighter|darker|keep|dislike|fill|info" >&2; exit 1 ;;
 esac
