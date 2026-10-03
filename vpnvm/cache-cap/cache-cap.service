@@ -1,0 +1,13 @@
+[Unit]
+Description=Cap the page cache of vpnvm so pcomp does not swap it out
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/cache-cap
+Environment=CAP_MB=1024 INTERVAL=30
+Restart=always
+RestartSec=10
+Nice=10
+
+[Install]
+WantedBy=multi-user.target
