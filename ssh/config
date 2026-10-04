@@ -69,6 +69,17 @@ Host pcomp
     ServerAliveInterval 15
     ServerAliveCountMax 4
 
+# pcomp для mosh вне дома: ssh :2229 приходит на pcomp через wg (10.30.0.2),
+# туда же fvds пробрасывает UDP 60001-60005; через :2228 mosh не поднимется
+Host pcomp-mosh
+    HostName 157.22.189.111
+    Port 2229
+    User pluttan
+    IdentityFile /Users/pluttan/.ssh/id_pcomp
+    StrictHostKeyChecking accept-new
+    ServerAliveInterval 15
+    ServerAliveCountMax 4
+
 # vpnvm по host-only линку pcomp<->vpnvm, мимо шлюза vpngw
 Host vpnvm
     HostName 10.101.0.2

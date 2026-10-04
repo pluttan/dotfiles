@@ -29,5 +29,12 @@ pt=$p/pets
 
 
 # vpnvm без обрывов: mosh до pcomp переживает сон мака и смену Wi-Fi,
-# дальше ssh по локальному линку pcomp<->vpnvm и сразу в tmux
-vm() { mosh pcomp -- ssh -t vpnvm 'tmux attach 2>/dev/null || tmux new'; }
+# дальше ssh по локальному линку pcomp<->vpnvm и сразу в tmux.
+# Дома — по локалке; вне дома (или когда VPN на маке ломает локалку) — через fvds.
+vm() {
+    if /usr/bin/nc -G 1 -w 2 192.168.1.254 6000 </dev/null | head -c 64 | grep -q ^SSH-; then
+        mosh pcomp -- ssh -t vpnvm 'tmux attach 2>/dev/null || tmux new'
+    else
+        mosh -p 60001:60005 pcomp-mosh -- ssh -t vpnvm 'tmux attach 2>/dev/null || tmux new'
+    fi
+}
