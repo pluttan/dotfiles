@@ -3,6 +3,7 @@
 # и какое звено отвечает — роутер, интернет в обход VPN, интернет через VPN.
 # Связи нет два замера подряд (часто после сна с закрытой крышкой) — сам
 # переподключает Wi-Fi, как это делают руками, не чаще раза в 3 минуты.
+# Заодно снимает входы по ssh, застрявшие до авторизации, — иначе sshd перестаёт пускать.
 #   netwatch.sh run            цикл (его держит LaunchAgent com.pluttan.netwatch)
 #   netwatch.sh report [дней]  эпизоды без интернета и чем они кончились
 # Signed: pluttan
@@ -26,6 +27,20 @@ wifi() {
 
 ok() { "$@" >/dev/null 2>&1 && echo ok || echo FAIL; }
 
+reap_sshd() {
+    # Вход по ssh, застрявший до авторизации (сеть сломалась посреди рукопожатия), висит вечно.
+    # Набралось таких больше MaxStartups — sshd молча сбрасывает новые входы (04.10.2026: 84 штуки).
+    # Снимаем висящие дольше 10 минут; живые сессии подписаны «user [priv]» / «user@tty», их не трогаем.
+    ps -axo pid=,etime=,command= | awk '
+        /sshd-session: .*\[(accepted|net|preauth)\]/ || /sshd-session: *$/ {
+            n = split($2, t, /[-:]/); min = (n >= 3) ? t[n-2] * 60 + t[n-1] : t[1]
+            if ($2 ~ /-/) min += 1440
+            if (min >= 10) print $1
+        }' | while read -r pid; do
+        sudo -n kill "$pid" 2>/dev/null && echo "$(date '+%F %T') reap: снят застрявший вход sshd $pid" >> "$LOGDIR/$(date +%F).log"
+    done
+}
+
 heal() {
     # Выключить и включить Wi-Fi: мак заново подключается к сети, VPN видит смену сети.
     networksetup -setairportpower en0 off && sleep 3 && networksetup -setairportpower en0 on
@@ -39,6 +54,7 @@ run() {
         # Цикл стоит, пока мак спит, — большой разрыв между замерами и есть пробуждение.
         (( now - prev > 90 )) && echo "$(date '+%F %T') wake: спал $(( (now - prev) / 60 )) мин" >> "$LOGDIR/$(date +%F).log"
         prev=$now
+        reap_sshd
         ip=$(ipconfig getifaddr en0 || echo -)
         lan=$(ok ping -c1 -t2 -b en0 "$ROUTER")   # мимо VPN-туннеля
         direct=$(ok ping -c1 -t2 -b en0 "$PROBE")
@@ -69,7 +85,7 @@ report() {
             if (d=="FAIL" && v=="ok") return "только прямой пинг (VPN работает) — не страшно"
             return "?"
         }
-        / (wake|heal): / { print "  " $0; next }
+        / (wake|heal|reap): / { print "  " $0; next }
         {
             split($0, f, " "); l=d=v=""
             for (i in f) { if (f[i] ~ /^lan=/) l=substr(f[i],5); if (f[i] ~ /^direct=/) d=substr(f[i],8); if (f[i] ~ /^vpn=/) v=substr(f[i],5) }
