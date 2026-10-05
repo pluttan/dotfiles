@@ -20,7 +20,8 @@
 # ней можно ходить назад и вперёд. Текущая копируется в
 # CURRENT (на него смотрит background_image в kitty.conf, так новые окна сразу
 # открываются с ней) и отправляется во все запущенные kitty через remote
-# control (listen_on unix:/tmp/kitty-sock-<pid>).
+# control (listen_on unix:/tmp/kitty-sock-<pid>). Та же картинка, без
+# затемнения, ставится обоями рабочего стола на все экраны.
 # Яркость — это background_tint: насколько цвет фона темы перекрывает
 # картинку. Подбирается сам под каждую картинку: замеряется её средняя
 # яркость L (0…1), и tint ставится такой, чтобы смесь картинки с фоном темы
@@ -198,6 +199,27 @@ retint() {
     done
 }
 
+# Обои рабочего стола — картинка $1 на все экраны (на тех Spaces, что сейчас
+# открыты). macOS кеширует обои по пути файла, поэтому каждый раз новое имя,
+# а прошлые файлы удаляются. NSWorkspace, в отличие от System Events, не
+# требует разрешения на управление другими программами.
+desktop() {
+    local file
+    mkdir -p "$STATE/desktop"
+    file="$STATE/desktop/$(date +%s)-$RANDOM.png"
+    cp "$1" "$file" || return
+    osascript -l JavaScript - "$file" >/dev/null 2>&1 <<'EOF'
+ObjC.import("AppKit");
+function run(argv) {
+    var url = $.NSURL.fileURLWithPath(argv[0]);
+    var screens = $.NSScreen.screens;
+    for (var i = 0; i < screens.count; i++)
+        $.NSWorkspace.sharedWorkspace.setDesktopImageURLForScreenOptionsError(url, screens.objectAtIndex(i), $({}), null);
+}
+EOF
+    find "$STATE/desktop" -type f ! -path "$file" -delete
+}
+
 # Отправить картинку из истории под номером $1 во все kitty.
 show() {
     cp "$(slot "$1").png" "$CURRENT.tmp" && mv "$CURRENT.tmp" "$CURRENT" || return 1
@@ -211,6 +233,7 @@ show() {
         [ -S "$sock" ] || continue
         "$KITTY" @ --to "unix:$sock" set-background-image --all --configured "$CURRENT" 2>/dev/null
     done
+    desktop "$CURRENT" &
 }
 
 # Скачать с wallhaven одну непоказанную картинку в $1.png, рядом $1.txt
