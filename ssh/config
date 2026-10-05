@@ -1,3 +1,5 @@
+Include /Users/pluttan/.colima/ssh_config
+
 Host pluttan.ru
 	HostName pluttan.ru
 	User pluttan
@@ -67,7 +69,7 @@ Host pcomp
     IdentityFile /Users/pluttan/.ssh/id_pcomp
     ConnectTimeout 8
     ServerAliveInterval 15
-    ServerAliveCountMax 4
+    ServerAliveCountMax 20
 
 # pcomp для mosh вне дома: ssh :2229 приходит на pcomp через wg (10.30.0.2),
 # туда же fvds пробрасывает UDP 60001-60005; через :2228 mosh не поднимется
@@ -78,7 +80,7 @@ Host pcomp-mosh
     IdentityFile /Users/pluttan/.ssh/id_pcomp
     StrictHostKeyChecking accept-new
     ServerAliveInterval 15
-    ServerAliveCountMax 4
+    ServerAliveCountMax 20
 
 # vpnvm по host-only линку pcomp<->vpnvm, мимо шлюза vpngw
 Host vpnvm
@@ -88,7 +90,7 @@ Host vpnvm
     User pluttan
     ProxyJump pcomp
     ServerAliveInterval 15
-    ServerAliveCountMax 4
+    ServerAliveCountMax 20
 
 Host claude-vm
     HostName 127.0.0.1
