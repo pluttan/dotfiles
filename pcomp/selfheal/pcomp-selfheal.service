@@ -1,0 +1,7 @@
+[Unit]
+Description=Bring back pcomp killswitch, vpnvm networks, vpngw and vpnvm if they are down
+After=network-online.target libvirtd.service incus.service nftables.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/pcomp-selfheal
