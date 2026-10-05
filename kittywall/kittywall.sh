@@ -225,43 +225,64 @@ EOF
 }
 
 # Фон чатов Telegram — картинка $1. Команды или API для локальной смены фона
-# у Telegram нет, поэтому подменяются его файлы: сам фон в postbox/media
-# (тот же файл жёсткой ссылкой лежит как _partial) и две его отрисовки, для
-# светлой и тёмной темы, в Wallpapers. Какой фон сейчас выбран — видно по
-# самой свежей отрисовке; выберешь в Telegram другой — подменяться станет он.
-# Настройки ссылаются на файл по id, базу трогать не нужно. Картинка ужимается
-# в JPEG 1920x1080 и дополняется нулями до прежнего размера файла, чтобы
-# Telegram не счёл его недокачанным. Оригиналы один раз копируются в
-# TG_BACKUP/<id>, их возвращает tg-restore. Открытый Telegram держит фон в
-# памяти и видит новый после перезапуска.
+# у Telegram нет, поэтому подменяются его файлы. Окно чата рисует не сам фон,
+# а его заранее обрезанную под окно копию в Wallpapers/telegram-local-file-
+# <id>_isDark__{0,1}.png (для светлой и тёмной темы) и читает её только при
+# запуске — какую именно, видно по времени последнего чтения. Заодно
+# подменяется и сам фон: postbox/media/<id> (жёсткой ссылкой он же _partial)
+# и его отрисовки <id>rotation0_isDark__{0,1}.png, текущий — самая свежая из
+# них. Настройки ссылаются на файлы по id, базу трогать не нужно. Картинка
+# пишется JPEG того же размера в пикселях, что и оригинал, и добивается нулями
+# до прежнего размера файла. Оригиналы один раз копируются в
+# TG_BACKUP/<id>, их возвращает tg-restore. Новый фон виден после перезапуска
+# Telegram.
 telegram() {
-    local wall id media tmp f size new q
+    local wall id media crop f
     [ -d "$TG/Wallpapers" ] || return 0
     wall=$(ls -t "$TG/Wallpapers"/telegram-cloud-document-*_isDark__0.png 2>/dev/null | head -n1)
+    crop=$(ls -tu "$TG/Wallpapers"/telegram-local-file-*_isDark__*.png 2>/dev/null | head -n1)
     [ -n "$wall" ] || return 0
     wall=${wall%_isDark__0.png}
+    crop=${crop%_isDark__*.png}
     id=$(basename "$wall" | sed 's/rotation[0-9]*$//')
     media=$(ls -d "$TG"/account-*/postbox/media 2>/dev/null | head -n1)
     mkdir -p "$TG_BACKUP/$id"
-    tmp=$(mktemp -d) || return
-    for f in "$media/$id" "$media/${id}_partial" "${wall}_isDark__0.png" "${wall}_isDark__1.png"; do
+    for f in "$media/$id" "$media/${id}_partial" "${wall}_isDark__0.png" "${wall}_isDark__1.png" \
+             ${crop:+"${crop}_isDark__0.png" "${crop}_isDark__1.png"}; do
         [ -f "$f" ] || continue
         [ -f "$TG_BACKUP/$id/$(basename "$f")" ] || cp -p "$f" "$TG_BACKUP/$id/"
-        size=$(stat -f %z "$TG_BACKUP/$id/$(basename "$f")")
-        q=85
-        while :; do
-            sips -s format jpeg -s formatOptions "$q" -z 1080 1920 "$1" --out "$tmp/new.jpg" >/dev/null 2>&1 || break
-            new=$(stat -f %z "$tmp/new.jpg")
-            [ "$new" -le "$size" ] || [ "$q" -le 30 ] && break
-            q=$((q - 10))
-        done
-        [ -f "$tmp/new.jpg" ] && [ "$new" -le "$size" ] || continue
-        # head -c из /dev/zero — добивка нулями до прежнего размера.
-        { cat "$tmp/new.jpg"; head -c $((size - new)) /dev/zero; } > "$tmp/out"
-        # cat в существующий файл, а не mv: жёсткая ссылка _partial сохраняется.
-        cat "$tmp/out" > "$f"
-        rm -f "$tmp/new.jpg"
+        tg_put "$1" "$f" "$TG_BACKUP/$id/$(basename "$f")"
     done
+}
+
+# Записать картинку $1 в файл Telegram $2 по образцу оригинала $3: та же
+# ширина и высота (по центру с обрезкой), JPEG, добивка нулями до размера $3.
+tg_put() {
+    local tmp w h iw ih size new q=85
+    w=$(sips -g pixelWidth "$3" 2>/dev/null | awk '/pixelWidth/ {print $2}')
+    h=$(sips -g pixelHeight "$3" 2>/dev/null | awk '/pixelHeight/ {print $2}')
+    iw=$(sips -g pixelWidth "$1" 2>/dev/null | awk '/pixelWidth/ {print $2}')
+    ih=$(sips -g pixelHeight "$1" 2>/dev/null | awk '/pixelHeight/ {print $2}')
+    [ -n "$w" ] && [ -n "$h" ] && [ -n "$iw" ] && [ -n "$ih" ] || return 1
+    size=$(stat -f %z "$3")
+    tmp=$(mktemp -d) || return
+    while :; do
+        # Сперва вписать по меньшей стороне, потом обрезать лишнее по центру.
+        if [ $((iw * h)) -gt $((ih * w)) ]; then
+            sips -s format jpeg -s formatOptions "$q" --resampleHeight "$h" "$1" --out "$tmp/r.jpg" >/dev/null 2>&1
+        else
+            sips -s format jpeg -s formatOptions "$q" --resampleWidth "$w" "$1" --out "$tmp/r.jpg" >/dev/null 2>&1
+        fi
+        sips -c "$h" "$w" "$tmp/r.jpg" --out "$tmp/new.jpg" >/dev/null 2>&1 || break
+        new=$(stat -f %z "$tmp/new.jpg")
+        [ "$new" -le "$size" ] || [ "$q" -le 30 ] && break
+        q=$((q - 10))
+    done
+    if [ -f "$tmp/new.jpg" ] && [ "$new" -le "$size" ]; then
+        # cat в существующий файл, а не mv: жёсткая ссылка _partial сохраняется.
+        { cat "$tmp/new.jpg"; head -c $((size - new)) /dev/zero; } > "$tmp/out"
+        cat "$tmp/out" > "$2"
+    fi
     rm -rf "$tmp"
 }
 
