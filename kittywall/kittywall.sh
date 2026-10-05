@@ -39,6 +39,7 @@
 #   kittywall.sh fill      докачать очередь (сам зовётся в фоне после смены)
 #   kittywall.sh info      что сейчас на фоне
 #   kittywall.sh tg-restore  вернуть Telegram его исходный фон
+#   kittywall.sh tg-refresh  перезапустить Telegram, если он не видел новый фон
 # Signed: pluttan
 
 # kitty запускает скрипт с локалью пользователя, а в ru_RU awk пишет дробь
@@ -54,6 +55,9 @@ TINT_CONF="$STATE/tint.conf"
 KITTY=/Applications/kitty.app/Contents/MacOS/kitty
 TG="$HOME/Library/Group Containers/6N38VWS5BX.ru.keepcoder.Telegram/stable"
 TG_BACKUP="$STATE/tg-backup"
+# Не чаще раза в TG_RESTART_EVERY секунд Telegram перезапускается, чтобы
+# увидеть новый фон.
+TG_RESTART_EVERY=3600
 API=https://wallhaven.cc/api/v1/search
 # У anime в SFW-выдаче остаётся фансервис — его теги исключаются из запроса.
 NO_ECCHI='-ecchi -cleavage -bikini -swimwear -lingerie -panties -underwear -thighs -stockings -boobs -ass -"big boobs" -"thigh-highs" -pantyhose -"bunny girl" -"no bra" -sideboob -underboob'
@@ -231,9 +235,11 @@ EOF
 # запуске — какую именно, видно по времени последнего чтения. Заодно
 # подменяется и сам фон: postbox/media/<id> (жёсткой ссылкой он же _partial)
 # и его отрисовки <id>rotation0_isDark__{0,1}.png, текущий — самая свежая из
-# них. Настройки ссылаются на файлы по id, базу трогать не нужно. Картинка
-# пишется JPEG того же размера в пикселях, что и оригинал, и добивается нулями
-# до прежнего размера файла. Оригиналы один раз копируются в
+# них. Настройки ссылаются на файлы по id, базу трогать не нужно. В
+# отрисовки картинка пишется целиком (JPEG до 1920 px): подгонка под их
+# 710x1080 оставляла от широкой картинки узкую полосу. В сам фон — JPEG того
+# же размера в пикселях, что оригинал, с добивкой нулями до прежнего размера
+# файла, иначе Telegram сочтёт его недокачанным. Оригиналы один раз копируются в
 # TG_BACKUP/<id>, их возвращает tg-restore. Новый фон виден после перезапуска
 # Telegram.
 telegram() {
@@ -251,7 +257,15 @@ telegram() {
              ${crop:+"${crop}_isDark__0.png" "${crop}_isDark__1.png"}; do
         [ -f "$f" ] || continue
         [ -f "$TG_BACKUP/$id/$(basename "$f")" ] || cp -p "$f" "$TG_BACKUP/$id/"
-        tg_put "$1" "$f" "$TG_BACKUP/$id/$(basename "$f")"
+        case "$f" in
+            # Отрисовки Telegram открывает как обычную картинку: туда целиком,
+            # без обрезки — окно чата само заполняется ею с краёв.
+            "$TG/Wallpapers/"*)
+                sips -s format jpeg -s formatOptions 80 -Z 1920 "$1" --out "$f.kw.jpg" >/dev/null 2>&1 \
+                    && cat "$f.kw.jpg" > "$f"
+                rm -f "$f.kw.jpg" ;;
+            *) tg_put "$1" "$f" "$TG_BACKUP/$id/$(basename "$f")" ;;
+        esac
     done
 }
 
@@ -303,6 +317,38 @@ tg_restore() {
     done
 }
 
+# Перезапустить Telegram, чтобы он показал новый фон. Готовую картинку фона
+# он держит в памяти и файл читает только при запуске, а снаружи эту память
+# не сбросить (hardened runtime, SIP). Перезапуск только если: Telegram
+# запущен, не на переднем плане, обрезанная копия фона изменилась после того,
+# как он её прочитал (mtime новее atime), и с прошлого перезапуска прошло
+# TG_RESTART_EVERY. Telegram закрывается и открывается через NSWorkspace и
+# NSRunningApplication — им, в отличие от osascript "quit app", не нужно
+# разрешение на управление другими программами. open -g не выводит его окно
+# на передний план.
+tg_refresh() {
+    local crop last now
+    crop=$(ls -tu "$TG/Wallpapers"/telegram-local-file-*_isDark__*.png 2>/dev/null | head -n1)
+    [ -n "$crop" ] || return 0
+    [ "$(stat -f %m "$crop")" -gt "$(stat -f %a "$crop")" ] || return 0
+    now=$(date +%s)
+    last=$(cat "$STATE/tg-restarted" 2>/dev/null || echo 0)
+    [ $((now - last)) -ge "$TG_RESTART_EVERY" ] || return 0
+    osascript -l JavaScript >/dev/null 2>&1 <<'EOF' || return 0
+ObjC.import("AppKit");
+var id = "ru.keepcoder.Telegram";
+var apps = $.NSRunningApplication.runningApplicationsWithBundleIdentifier(id);
+var front = $.NSWorkspace.sharedWorkspace.frontmostApplication;
+if (apps.count == 0 || (!front.isNil() && front.bundleIdentifier.js == id))
+    throw "skip";
+apps.objectAtIndex(0).terminate;
+EOF
+    # Ждать выхода по pgrep: свойство terminated в osascript не обновляется.
+    for _ in $(seq 150); do pgrep -xq Telegram || break; sleep 0.1; done
+    echo "$now" > "$STATE/tg-restarted"
+    open -g -b ru.keepcoder.Telegram
+}
+
 # Отправить картинку из истории под номером $1 во все kitty.
 show() {
     cp "$(slot "$1").png" "$CURRENT.tmp" && mv "$CURRENT.tmp" "$CURRENT" || return 1
@@ -318,6 +364,7 @@ show() {
     done
     desktop "$CURRENT" &
     telegram "$CURRENT" &
+    TG_PID=$!
 }
 
 # Скачать с wallhaven одну непоказанную картинку в $1.png, рядом $1.txt
@@ -485,7 +532,8 @@ touch "$STATE/seen"
 [ -f "$TINT_CONF" ] || echo "background_tint 0.90" > "$TINT_CONF"
 
 case "$1" in
-    auto) fresh ;;
+    # Сперва дождаться фоновой подмены фона Telegram из show().
+    auto) fresh; [ -n "$TG_PID" ] && wait "$TG_PID"; tg_refresh ;;
     next) next ;;
     prev) prev ;;
     brighter) target "-$TINT_STEP" ;;
@@ -494,9 +542,10 @@ case "$1" in
     dislike) dislike ;;
     fill) fill ;;
     tg-restore) tg_restore ;;
+    tg-refresh) tg_refresh ;;
     info)
         echo "$(cat "$(slot "$(pos)").txt" 2>/dev/null)  [$(pos) из $(last)]"
         echo "яркость картинки $(cat "$STATE/luma" 2>/dev/null), цель $(cat "$STATE/target" 2>/dev/null || echo "$TARGET_DEFAULT"), $(cat "$TINT_CONF")"
         echo "в очереди: $(ls "$QUEUE" | grep -c '\.png$'), показано с wallhaven: $(wc -l < "$STATE/seen")" ;;
-    *) echo "usage: $0 auto|next|prev|brighter|darker|keep|dislike|fill|info|tg-restore" >&2; exit 1 ;;
+    *) echo "usage: $0 auto|next|prev|brighter|darker|keep|dislike|fill|info|tg-restore|tg-refresh" >&2; exit 1 ;;
 esac
