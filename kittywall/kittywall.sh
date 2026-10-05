@@ -21,7 +21,8 @@
 # CURRENT (на него смотрит background_image в kitty.conf, так новые окна сразу
 # открываются с ней) и отправляется во все запущенные kitty через remote
 # control (listen_on unix:/tmp/kitty-sock-<pid>). Та же картинка, без
-# затемнения, ставится обоями рабочего стола на все экраны.
+# затемнения, ставится обоями рабочего стола на все экраны и фоном чатов
+# Telegram (подменой его файлов фона, см. telegram()).
 # Яркость — это background_tint: насколько цвет фона темы перекрывает
 # картинку. Подбирается сам под каждую картинку: замеряется её средняя
 # яркость L (0…1), и tint ставится такой, чтобы смесь картинки с фоном темы
@@ -37,6 +38,7 @@
 #   kittywall.sh dislike   дизлайк: убрать текущую и показать следующую
 #   kittywall.sh fill      докачать очередь (сам зовётся в фоне после смены)
 #   kittywall.sh info      что сейчас на фоне
+#   kittywall.sh tg-restore  вернуть Telegram его исходный фон
 # Signed: pluttan
 
 # kitty запускает скрипт с локалью пользователя, а в ru_RU awk пишет дробь
@@ -50,6 +52,8 @@ QUEUE="$STATE/queue"
 CURRENT="$STATE/current.png"
 TINT_CONF="$STATE/tint.conf"
 KITTY=/Applications/kitty.app/Contents/MacOS/kitty
+TG="$HOME/Library/Group Containers/6N38VWS5BX.ru.keepcoder.Telegram/stable"
+TG_BACKUP="$STATE/tg-backup"
 API=https://wallhaven.cc/api/v1/search
 # У anime в SFW-выдаче остаётся фансервис — его теги исключаются из запроса.
 NO_ECCHI='-ecchi -cleavage -bikini -swimwear -lingerie -panties -underwear -thighs -stockings -boobs -ass -"big boobs" -"thigh-highs" -pantyhose -"bunny girl" -"no bra" -sideboob -underboob'
@@ -220,6 +224,64 @@ EOF
     find "$STATE/desktop" -type f ! -path "$file" -delete
 }
 
+# Фон чатов Telegram — картинка $1. Команды или API для локальной смены фона
+# у Telegram нет, поэтому подменяются его файлы: сам фон в postbox/media
+# (тот же файл жёсткой ссылкой лежит как _partial) и две его отрисовки, для
+# светлой и тёмной темы, в Wallpapers. Какой фон сейчас выбран — видно по
+# самой свежей отрисовке; выберешь в Telegram другой — подменяться станет он.
+# Настройки ссылаются на файл по id, базу трогать не нужно. Картинка ужимается
+# в JPEG 1920x1080 и дополняется нулями до прежнего размера файла, чтобы
+# Telegram не счёл его недокачанным. Оригиналы один раз копируются в
+# TG_BACKUP/<id>, их возвращает tg-restore. Открытый Telegram держит фон в
+# памяти и видит новый после перезапуска.
+telegram() {
+    local wall id media tmp f size new q
+    [ -d "$TG/Wallpapers" ] || return 0
+    wall=$(ls -t "$TG/Wallpapers"/telegram-cloud-document-*_isDark__0.png 2>/dev/null | head -n1)
+    [ -n "$wall" ] || return 0
+    wall=${wall%_isDark__0.png}
+    id=$(basename "$wall" | sed 's/rotation[0-9]*$//')
+    media=$(ls -d "$TG"/account-*/postbox/media 2>/dev/null | head -n1)
+    mkdir -p "$TG_BACKUP/$id"
+    tmp=$(mktemp -d) || return
+    for f in "$media/$id" "$media/${id}_partial" "${wall}_isDark__0.png" "${wall}_isDark__1.png"; do
+        [ -f "$f" ] || continue
+        [ -f "$TG_BACKUP/$id/$(basename "$f")" ] || cp -p "$f" "$TG_BACKUP/$id/"
+        size=$(stat -f %z "$TG_BACKUP/$id/$(basename "$f")")
+        q=85
+        while :; do
+            sips -s format jpeg -s formatOptions "$q" -z 1080 1920 "$1" --out "$tmp/new.jpg" >/dev/null 2>&1 || break
+            new=$(stat -f %z "$tmp/new.jpg")
+            [ "$new" -le "$size" ] || [ "$q" -le 30 ] && break
+            q=$((q - 10))
+        done
+        [ -f "$tmp/new.jpg" ] && [ "$new" -le "$size" ] || continue
+        # head -c из /dev/zero — добивка нулями до прежнего размера.
+        { cat "$tmp/new.jpg"; head -c $((size - new)) /dev/zero; } > "$tmp/out"
+        # cat в существующий файл, а не mv: жёсткая ссылка _partial сохраняется.
+        cat "$tmp/out" > "$f"
+        rm -f "$tmp/new.jpg"
+    done
+    rm -rf "$tmp"
+}
+
+# Вернуть Telegram все исходные фоны из TG_BACKUP.
+tg_restore() {
+    local dir id media f
+    media=$(ls -d "$TG"/account-*/postbox/media 2>/dev/null | head -n1)
+    for dir in "$TG_BACKUP"/*/; do
+        [ -d "$dir" ] || continue
+        id=$(basename "$dir")
+        for f in "$dir"*; do
+            case "$f" in
+                *_isDark__*) cat "$f" > "$TG/Wallpapers/$(basename "$f")" ;;
+                *) cat "$f" > "$media/$(basename "$f")" ;;
+            esac
+        done
+        echo "вернул фон $id"
+    done
+}
+
 # Отправить картинку из истории под номером $1 во все kitty.
 show() {
     cp "$(slot "$1").png" "$CURRENT.tmp" && mv "$CURRENT.tmp" "$CURRENT" || return 1
@@ -234,6 +296,7 @@ show() {
         "$KITTY" @ --to "unix:$sock" set-background-image --all --configured "$CURRENT" 2>/dev/null
     done
     desktop "$CURRENT" &
+    telegram "$CURRENT" &
 }
 
 # Скачать с wallhaven одну непоказанную картинку в $1.png, рядом $1.txt
@@ -393,7 +456,7 @@ keep() {
 mkdir -p "$HISTORY" "$QUEUE"
 # Нажатия подряд не должны менять фон разом: второе ждёт первое. Докачка
 # очереди идёт мимо этого замка, у неё свой.
-if [ "$1" != fill ] && [ "$1" != info ]; then
+if [ "$1" != fill ] && [ "$1" != info ] && [ "$1" != tg-restore ]; then
     for _ in $(seq 100); do mkdir "$STATE/lock" 2>/dev/null && break; sleep 0.3; done
     trap 'rmdir "$STATE/lock" 2>/dev/null' EXIT
 fi
@@ -409,9 +472,10 @@ case "$1" in
     keep) keep ;;
     dislike) dislike ;;
     fill) fill ;;
+    tg-restore) tg_restore ;;
     info)
         echo "$(cat "$(slot "$(pos)").txt" 2>/dev/null)  [$(pos) из $(last)]"
         echo "яркость картинки $(cat "$STATE/luma" 2>/dev/null), цель $(cat "$STATE/target" 2>/dev/null || echo "$TARGET_DEFAULT"), $(cat "$TINT_CONF")"
         echo "в очереди: $(ls "$QUEUE" | grep -c '\.png$'), показано с wallhaven: $(wc -l < "$STATE/seen")" ;;
-    *) echo "usage: $0 auto|next|prev|brighter|darker|keep|dislike|fill|info" >&2; exit 1 ;;
+    *) echo "usage: $0 auto|next|prev|brighter|darker|keep|dislike|fill|info|tg-restore" >&2; exit 1 ;;
 esac
