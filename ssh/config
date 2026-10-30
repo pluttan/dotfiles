@@ -100,3 +100,23 @@ Host claude-vm
     IdentitiesOnly yes
     StrictHostKeyChecking accept-new
     UserKnownHostsFile ~/.local/share/xray-vm/known_hosts_guest
+
+Host *.bmstu.ru
+  ProxyCommand nc -X 5 -x 127.0.0.1:11080 %h %p
+
+# BMSTU server, reachable only through the VPN container on pcomp
+Host bmstu-oleg 195.19.43.14
+  HostName 195.19.43.14
+  Port 2622
+  User oleg_andrey
+  IdentityFile ~/.ssh/id_ed25519_bmstu
+  ProxyCommand nc -X 5 -x 127.0.0.1:11080 %h %p
+
+# dl580.iu6.bmstu.ru (devlab), through the BMSTU VPN container
+Host devlab 195.19.32.95
+  HostName 195.19.32.95
+  User pluttan
+  IdentityFile ~/.ssh/id_ed25519_devlab
+  IdentitiesOnly yes
+  ProxyCommand nc -X 5 -x 127.0.0.1:11080 %h %p
+  StrictHostKeyChecking accept-new
