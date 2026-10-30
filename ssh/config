@@ -120,3 +120,5 @@ Host devlab 195.19.32.95
   IdentitiesOnly yes
   ProxyCommand nc -X 5 -x 127.0.0.1:11080 %h %p
   StrictHostKeyChecking accept-new
+  ServerAliveInterval 15
+  ServerAliveCountMax 20
