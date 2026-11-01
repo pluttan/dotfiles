@@ -38,3 +38,14 @@ vm() {
         mosh -p 60001:60005 pcomp-mosh -- ssh -t vpnvm 'tmux attach 2>/dev/null || tmux new'
     fi
 }
+
+# ssh ilo: консоль iLO 3 сервера devlab. Системный ssh 10.x не умеет DSA,
+# поэтому этот хост обслуживает старый клиент OpenSSH 9.9 через ~/.local/bin/ilo.
+ssh() {
+    if [[ $1 == ilo ]]; then
+        shift
+        ~/.local/bin/ilo "$@"
+    else
+        command ssh "$@"
+    fi
+}

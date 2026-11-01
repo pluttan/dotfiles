@@ -122,3 +122,17 @@ Host devlab 195.19.32.95
   StrictHostKeyChecking accept-new
   ServerAliveInterval 15
   ServerAliveCountMax 20
+
+# Веб-интерфейс iLO 3 devlab: ssh ilo-web, затем https://localhost:8443
+# Консоль iLO: ssh ilo (функция в zsh/mac/.custom_aliases), настройки в ssh/ilo.config
+Host ilo-web
+  HostName 195.19.43.14
+  Port 2622
+  User oleg_andrey
+  IdentityFile ~/.ssh/id_ed25519_bmstu
+  IdentitiesOnly yes
+  ProxyCommand nc -X 5 -x 127.0.0.1:11080 %h %p
+  LocalForward 8443 195.19.43.29:443
+  SessionType none
+  ExitOnForwardFailure yes
+  ServerAliveInterval 15
